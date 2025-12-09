@@ -1,0 +1,10 @@
+**/.env
+
+**/node_modules
+npm-debug.log*
+
+# Ignore les dossiers de volumes de données
+mongo-data/
+
+*.log
+*.tmp
