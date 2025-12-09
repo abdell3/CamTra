@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/db.config');
 const { notFound, errorHandler } = require('./app/Http/Middlewares/error.middleware');
+const authRoutes = require('./routes/auth.routes');
 
 dotenv.config();
 
@@ -19,9 +20,6 @@ app.use(cors({
     credentials: true 
 }));
 
-app.use(notFound);
-app.use(errorHandler);
-
 // 2. Traitement des données
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,6 +31,13 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'API is healthy', time: new Date() });
 
 });
+
+// --- ROUTES D'AUTHENTIFICATION ---
+app.use('/api/auth', authRoutes);
+
+// --- MIDDLEWARES D'ERREUR ---
+app.use(notFound);
+app.use(errorHandler);
 
 // --- Lancement du Serveur ---
 
