@@ -1,0 +1,67 @@
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: camtra-mongodb
+    restart: always
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - camtra-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: camtra-backend
+    restart: always
+    environment:
+      NODE_ENV: development 
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/CamTraDB
+      JWT_SECRET: votre_cle_secrete_hyper_securisee_ici
+    ports:
+      - "5001:5000"
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - camtra-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: camtra-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://backend:5000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - camtra-network
+
+volumes:
+  mongo-data:
+
+networks:
+  camtra-network:
+    driver: bridge
