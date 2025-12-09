@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/db.config');
+const { notFound, errorHandler } = require('./app/Http/Middlewares/error.middleware');
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true 
 }));
+
+app.use(notFound);
+app.use(errorHandler);
 
 // 2. Traitement des données
 app.use(express.json());
