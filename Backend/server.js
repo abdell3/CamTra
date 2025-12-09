@@ -3,13 +3,11 @@ const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
-
-// Chargement des variables d'environnement si l'application n'est pas dans un conteneur Docker
-
-// Docker Compose gère les variables directement.
+const connectDB = require('./config/db.config');
 
 dotenv.config();
 
+connectDB(); 
 // --- MIDDLEWARES DE BASE ---
 // 1. SECURITE
 
@@ -24,14 +22,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Nous allons initialiser la connexion à la BDD ici après la création du fichier config/db.config.js
-
-// const connectDB = require('./config/db.config');
-
-// connectDB(); 
-
-
-
 // --- ROUTE HEALTHCHECK (Obligation Docker Compose) ---
 
 app.get('/api/health', (req, res) => {
@@ -40,14 +30,9 @@ app.get('/api/health', (req, res) => {
 
 });
 
-
-
 // --- Lancement du Serveur ---
 
 const PORT = process.env.PORT || 5000;
-
-
-
 app.listen(PORT, () => {
 
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
