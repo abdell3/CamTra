@@ -8,6 +8,7 @@ class UserController {
         this.getDrivers = this.getDrivers.bind(this);
         this.deleteUser = this.deleteUser.bind(this);
         this.createDriver = this.createDriver.bind(this);
+        this.updateUser = this.updateUser.bind(this);
     }
 
     async getDrivers(req, res, next) {
@@ -41,6 +42,21 @@ class UserController {
             const driverObj = driver.toObject ? driver.toObject() : driver;
             const { password, ...safeDriver } = driverObj;
             res.status(201).json(safeDriver);
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            next(error);
+        }
+    }
+
+    async updateUser(req, res, next) {
+        try {
+            const { id } = req.params;
+            const updatedUser = await this.userService.updateUser(id, req.body);
+            const userObj = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
+            const { password, ...safeUser } = userObj;
+            res.status(200).json(safeUser);
         } catch (error) {
             if (error.status) {
                 res.status(error.status);

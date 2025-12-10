@@ -15,6 +15,7 @@ router.use(checkAuth, checkRole(['Admin']));
 
 router.get('/drivers', userController.getDrivers);
 router.post('/drivers', userController.createDriver);
+router.put('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);
 
 module.exports = router;
