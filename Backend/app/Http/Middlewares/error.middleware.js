@@ -9,10 +9,13 @@ const notFound = (req, res, next) => {
 
 /**
  * Middleware de gestion des erreurs générique.
- * Il doit toujours prendre quatre arguments (err, req, res, next).
  */
 const errorHandler = (err, req, res, next) => {
-    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    let statusCode = err.status || res.statusCode;
+
+    if (statusCode === 200) {
+        statusCode = 500;
+    }    
     let message = err.message;
 
     if (err.name === 'CastError' && err.kind === 'ObjectId') {
