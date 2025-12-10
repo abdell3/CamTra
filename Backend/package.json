@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon -L server.js",
     "test": "mocha tests --recursive --exit"
   },
   "name": "backend",
