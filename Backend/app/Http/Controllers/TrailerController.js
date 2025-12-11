@@ -15,11 +15,19 @@ class TrailerController {
     async create(req, res, next) {
         try {
             const trailer = await this.trailerService.create(req.body);
-            res.status(201).json(trailer);
+            res.status(201).json({
+                succes : true,
+                message : 'Trailer created',
+                trailer
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                success : false,
+                message : error.message || 'Failed to create trailer'
+            });
             next(error);
         }
     }
@@ -27,11 +35,19 @@ class TrailerController {
     async getAll(req, res, next) {
         try {
             const trailers = await this.trailerService.getAll();
-            res.status(200).json(trailers);
+            res.status(200).json({
+                success : true, 
+                message : "All Trailers are Here : ",
+                trailers
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                success : true,
+                message : error.message || 'Failed To get all Trailers !'
+            });
             next(error);
         }
     }
@@ -40,11 +56,19 @@ class TrailerController {
         try {
             const { id } = req.params;
             const trailer = await this.trailerService.getById(id);
-            res.status(200).json(trailer);
+            res.status(200).json({
+                succes : true ,
+                message : "Trailer is here : ",
+                trailer
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                succes : false,
+                message : error.message || 'Failed To get Trailer !'
+            });
             next(error);
         }
     }
@@ -53,11 +77,19 @@ class TrailerController {
         try {
             const { id } = req.params;
             const updatedTrailer = await this.trailerService.update(id, req.body);
-            res.status(200).json(updatedTrailer);
+            res.status(200).json({
+                succes : true,
+                message: 'Trailed Updated Succesfully !',
+                updatedTrailer,
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                succes : false,
+                message : error.message || 'Failed to update Trailer !'
+            });
             next(error);
         }
     }
@@ -66,11 +98,18 @@ class TrailerController {
         try {
             const { id } = req.params;
             await this.trailerService.delete(id);
-            res.status(204).send();
+            res.status(204).json({
+                success : true,
+                message : 'Trailer Deleted !'
+            }).send();
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                success : false,
+                message : error.message || 'Failed to delete Trailer'
+            });
             next(error);
         }
     }
