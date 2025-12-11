@@ -66,11 +66,18 @@ class TruckController {
         try {
             const { id } = req.params;
             await this.truckService.delete(id);
-            res.status(204).send();
+            res.status(200).json({
+                success: true,
+                message: "Deleted !"
+            }).send();
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                success: false,
+                message: error.message || 'Failed to delete truck'
+            });
             next(error);
         }
     }
