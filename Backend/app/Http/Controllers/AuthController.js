@@ -7,6 +7,7 @@ class AuthController {
 
         this.handleRegister = this.handleRegister.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
+        this.handleRefreshToken = this.handleRefreshToken.bind(this);
     }
 
     async handleRegister(req, res, next) {
@@ -16,15 +17,23 @@ class AuthController {
                 payload.role = 'Chauffeur';
             }
 
-            const { user, token } = await this.authService.register(payload);
+            const { user, accessToken, refreshToken } = await this.authService.register(payload);
             const userObj = user.toObject ? user.toObject() : user;
             const { password, ...safeUser } = userObj;
 
-            res.status(201).json({ token, user: safeUser });
+            res.status(201).json({ 
+                accessToken, 
+                refreshToken, 
+                user: safeUser 
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                succes: false,
+                message: error.message || 'Failed to handle Register !'
+            });
             next(error);
         }
     }
@@ -32,16 +41,41 @@ class AuthController {
     async handleLogin(req, res, next) {
         try {
             const { email, password } = req.body;
-            const { user, token } = await this.authService.login(email, password);
+            const { user, accessToken, refreshToken } = await this.authService.login(email, password);
 
             const userObj = user.toObject ? user.toObject() : user;
             const { password: pw, ...safeUser } = userObj;
 
-            res.status(200).json({ token, user: safeUser });
+            res.status(200).json({ 
+                accessToken, 
+                refreshToken, 
+                user: safeUser 
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
+            res.json({
+                succes: false,
+                message: error.message || 'Failed to handle Login ! '
+            });
+            next(error);
+        }
+    }
+
+    async handleRefreshToken(req, res, next) {
+        try {
+            const { refreshToken } = req.body;
+            const tokens = await this.authService.refreshToken(refreshToken);
+            res.status(200).json(tokens);
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            res.json({
+                success: false,
+                message: error.message || 'Failed to handle RefreshToken !'
+            });
             next(error);
         }
     }
