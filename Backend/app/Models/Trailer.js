@@ -11,11 +11,11 @@ const trailerSchema = new Schema(
             trim: true,
             index: true
         },
-        marque: {
+        brand: {
             type: String,
             required: true
         },
-        modele: {
+        model: {
             type: String,
             required: true
         },

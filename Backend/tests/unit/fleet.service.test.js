@@ -30,8 +30,8 @@ describe('Fleet Services', () => {
         describe('getAll', () => {
             it('devrait appeler model.find({}) et retourner les résultats', async () => {
                 const fakeTrucks = [
-                    { id: '1', immatriculation: 'TR-001', marque: 'Volvo' },
-                    { id: '2', immatriculation: 'TR-002', marque: 'Scania' },
+                    { id: '1', immatriculation: 'TR-001', brand: 'Volvo' },
+                    { id: '2', immatriculation: 'TR-002', brand: 'Scania' },
                 ];
 
                 truckRepositoryStub.model.find.resolves(fakeTrucks);
@@ -49,8 +49,8 @@ describe('Fleet Services', () => {
                 const fakeTruck = {
                     id: truckId,
                     immatriculation: 'TR-001',
-                    marque: 'Volvo',
-                    modele: 'FH16',
+                    brand: 'Volvo',
+                    model: 'FH16',
                 };
 
                 truckRepositoryStub.findById.resolves(fakeTruck);
@@ -84,9 +84,9 @@ describe('Fleet Services', () => {
                 const existingTruck = {
                     id: truckId,
                     immatriculation: 'TR-001',
-                    marque: 'Volvo',
+                    brand: 'Volvo',
                 };
-                const updateData = { marque: 'Scania', currentKm: 50000 };
+                const updateData = { brand: 'Scania', currentKm: 50000 };
                 const updatedTruck = { ...existingTruck, ...updateData };
 
                 truckRepositoryStub.findById.resolves(existingTruck);
@@ -102,7 +102,7 @@ describe('Fleet Services', () => {
 
             it('devrait lancer une erreur 404 si camion non trouvé', async () => {
                 const truckId = '999';
-                const updateData = { marque: 'Scania' };
+                const updateData = { brand: 'Scania' };
 
                 truckRepositoryStub.findById.resolves(null);
 
@@ -125,7 +125,7 @@ describe('Fleet Services', () => {
                 const fakeTruck = {
                     id: truckId,
                     immatriculation: 'TR-001',
-                    marque: 'Volvo',
+                    brand: 'Volvo',
                 };
 
                 truckRepositoryStub.findById.resolves(fakeTruck);
@@ -182,8 +182,8 @@ describe('Fleet Services', () => {
         describe('getAll', () => {
             it('devrait appeler model.find({}) et retourner les résultats', async () => {
                 const fakeTrailers = [
-                    { id: '1', immatriculation: 'TRL-001', marque: 'Schmitz' },
-                    { id: '2', immatriculation: 'TRL-002', marque: 'Krone' },
+                    { id: '1', immatriculation: 'TRL-001', brand: 'Schmitz' },
+                    { id: '2', immatriculation: 'TRL-002', brand: 'Krone' },
                 ];
 
                 trailerRepositoryStub.model.find.resolves(fakeTrailers);
@@ -201,8 +201,8 @@ describe('Fleet Services', () => {
                 const fakeTrailer = {
                     id: trailerId,
                     immatriculation: 'TRL-001',
-                    marque: 'Schmitz',
-                    modele: 'Cargobull',
+                    brand: 'Schmitz',
+                    model: 'Cargobull',
                 };
 
                 trailerRepositoryStub.findById.resolves(fakeTrailer);
@@ -236,9 +236,9 @@ describe('Fleet Services', () => {
                 const existingTrailer = {
                     id: trailerId,
                     immatriculation: 'TRL-001',
-                    marque: 'Schmitz',
+                    brand: 'Schmitz',
                 };
-                const updateData = { marque: 'Krone', isAvailable: false };
+                const updateData = { brand: 'Krone', isAvailable: false };
                 const updatedTrailer = { ...existingTrailer, ...updateData };
 
                 trailerRepositoryStub.findById.resolves(existingTrailer);
@@ -254,7 +254,7 @@ describe('Fleet Services', () => {
 
             it('devrait lancer une erreur 404 si remorque non trouvée', async () => {
                 const trailerId = '999';
-                const updateData = { marque: 'Krone' };
+                const updateData = { brand: 'Krone' };
 
                 trailerRepositoryStub.findById.resolves(null);
 
@@ -277,7 +277,7 @@ describe('Fleet Services', () => {
                 const fakeTrailer = {
                     id: trailerId,
                     immatriculation: 'TRL-001',
-                    marque: 'Schmitz',
+                    brand: 'Schmitz',
                 };
 
                 trailerRepositoryStub.findById.resolves(fakeTrailer);
