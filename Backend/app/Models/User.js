@@ -63,13 +63,38 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.methods.generateAuthToken = async function () {
-    const secret = process.env.JWT_SECRET;
+userSchema.methods.generateAccessToken = async function () {
+    const secret = process.env.JWT_ACCESS_SECRET;
+    const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN;
     if (!secret) {
-        throw new Error('JWT secret is not configured');
+        throw new Error('JWT access secret is not configured');
     }
 
-    return signJwt({ id: this._id.toString(), role: this.role }, secret);
+    return signJwt(
+        { 
+            id: this._id.toString(), 
+            role: this.role 
+        },
+        secret,
+        expiresIn ? { expiresIn } : undefined
+    );
+};
+
+userSchema.methods.generateRefreshToken = async function () {
+    const secret = process.env.JWT_REFRESH_SECRET;
+    const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN;
+    if (!secret) {
+        throw new Error('JWT refresh secret is not configured');
+    }
+
+    return signJwt(
+        { 
+            id: this._id.toString(), 
+            role: this.role 
+        },
+        secret,
+        expiresIn ? { expiresIn } : undefined
+    );
 };
 
 module.exports = mongoose.model('User', userSchema);

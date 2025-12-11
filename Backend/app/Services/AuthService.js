@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 class AuthService {
     constructor(userRepository, UserModel) {
         if (!userRepository || !UserModel) {
@@ -16,11 +18,13 @@ class AuthService {
         }
 
         const user = await this.userRepository.create(userData);
-        const token = await user.generateAuthToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
 
         return { 
             user, 
-            token 
+            accessToken, 
+            refreshToken 
         };
     }
 
@@ -39,11 +43,50 @@ class AuthService {
             throw error;
         }
 
-        const token = await user.generateAuthToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
         return { 
             user, 
-            token 
+            accessToken, 
+            refreshToken 
         };
+    }
+
+    async refreshToken(token) {
+        const secret = process.env.JWT_REFRESH_SECRET;
+        if (!secret) {
+            const error = new Error('JWT refresh secret is not configured');
+            error.status = 500;
+            throw error;
+        }
+
+        try {
+            const decoded = await new Promise((resolve, reject) => {
+                jwt.verify(token, secret, (err, payload) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve(payload);
+                });
+            });
+
+            const userId = decoded.id || decoded._id;
+            const user = await this.userRepository.findById(userId);
+            if (!user) {
+                const error = new Error('User not found');
+                error.status = 404;
+                throw error;
+            }
+
+            const accessToken = await user.generateAccessToken();
+            const refreshToken = await user.generateRefreshToken();
+
+            return { accessToken, refreshToken };
+        } catch (err) {
+            const error = new Error('Invalid or expired refresh token');
+            error.status = 403;
+            throw error;
+        }
     }
 }
 

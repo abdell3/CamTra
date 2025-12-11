@@ -11,9 +11,9 @@ const checkAuth = (req, res, next) => {
     }
 
     try {
-        const secret = process.env.JWT_SECRET;
+        const secret = process.env.JWT_ACCESS_SECRET;
         if (!secret) {
-            const error = new Error('JWT secret is not configured');
+            const error = new Error('JWT access secret is not configured');
             error.status = 500;
             return next(error);
         }

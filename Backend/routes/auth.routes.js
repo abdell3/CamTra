@@ -12,6 +12,7 @@ const authController = new AuthController(authService);
 
 router.post('/register', authController.handleRegister);
 router.post('/login', authController.handleLogin);
+router.post('/refresh', authController.handleRefreshToken);
 
 module.exports = router;
 
