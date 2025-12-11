@@ -50,5 +50,22 @@ const truckSchema = new Schema(
     }
 );
 
+truckSchema.methods.calculateRemainingKm = function (maintenanceRule) {
+    if (!maintenanceRule || !maintenanceRule.periodKm) {
+        throw new Error('Maintenance rule with periodKm is required');
+    }
+
+    const lastMaintenanceKm = this.lastMaintenanceKm || 0;
+    const kmSinceLastMaintenance = this.currentKm - lastMaintenanceKm;
+    const remainingKm = maintenanceRule.periodKm - kmSinceLastMaintenance;
+
+    return remainingKm;
+};
+
+truckSchema.methods.isDueForService = function (maintenanceRule) {
+    const remainingKm = this.calculateRemainingKm(maintenanceRule);
+    return remainingKm <= 0;
+};
+
 module.exports = mongoose.model('Truck', truckSchema); 
 

@@ -37,5 +37,40 @@ const trailerSchema = new Schema(
     }
 );
 
+trailerSchema.methods.calculateRemainingDays = function (maintenanceRule) {
+    if (!maintenanceRule || !maintenanceRule.periodMonths) {
+        throw new Error('Maintenance rule with periodMonths is required');
+    }
+
+    if (!this.lastMaintenanceDate) {
+        return null;
+    }
+
+    const today = new Date();
+    const lastMaintenance = new Date(this.lastMaintenanceDate);
+    const monthsToAdd = maintenanceRule.periodMonths;
+
+    let nextMaintenanceDate;
+    if (typeof periodMonths === 'number') {
+        nextMaintenanceDate = new Date(lastMaintenance);
+        nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + monthsToAdd);
+    } else {
+        throw new Error('intervalTime must be a number (months)');
+    }
+
+    const diffTime = nextMaintenanceDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+};
+
+trailerSchema.methods.isDueForService = function (maintenanceRule) {
+    const remainingDays = this.calculateRemainingDays(maintenanceRule);
+    if (remainingDays === null) {
+        return false;
+    }
+    return remainingDays <= 0;
+};
+
 module.exports = mongoose.model('Trailer', trailerSchema);
 
