@@ -7,6 +7,8 @@ const connectDB = require('./config/db.config');
 const { notFound, errorHandler } = require('./app/Http/Middlewares/error.middleware');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const truckRoutes = require('./routes/truck.routes');
+const trailerRoutes = require('./routes/trailer.routes');
 
 dotenv.config();
 
@@ -37,6 +39,9 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 // --- ROUTES UTILISATEURS (ADMIN) ---
 app.use('/api/users', userRoutes);
+// --- ROUTES FLOTTE (ADMIN) ---
+app.use('/api/trucks', truckRoutes);
+app.use('/api/trailers', trailerRoutes);
 
 // --- MIDDLEWARES D'ERREUR ---
 app.use(notFound);
