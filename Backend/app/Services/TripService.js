@@ -82,6 +82,10 @@ class TripService {
             .populate('trailer');
     }
 
+    async getDriverTrips(driverId) {
+        return this.tripRepository.findAllByDriver(driverId);
+    }
+
     async update(id, data) {
         const trip = await this.tripRepository.findById(id);
         if (!trip) {

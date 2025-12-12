@@ -14,6 +14,17 @@ class TripRepository extends BaseRepository {
             .populate('truck')
             .populate('trailer');
     }
+
+    async findAllByDriver(driverId) {
+        return this.model
+            .find({
+                driver: driverId,
+                status: { $ne: 'Cancelled' },
+            })
+            .sort({ startDate: 1 })
+            .populate('truck')
+            .populate('trailer');
+    }
 }
 
 module.exports = TripRepository;
