@@ -21,6 +21,7 @@ describe('TripService', () => {
             update: sinon.stub(),
             delete: sinon.stub(),
             findActiveTripsByDriver: sinon.stub(),
+            findAllByDriver: sinon.stub(),
         };
 
         userRepositoryStub = {
@@ -375,6 +376,68 @@ describe('TripService', () => {
                 expect(error.message).to.include('Trip not found');
                 expect(tripRepositoryStub.update.called).to.be.false;
             }
+        });
+    });
+
+    describe('getDriverTrips', () => {
+        it('devrait retourner une liste de trajets pour un chauffeur', async () => {
+            const driverId = 'driver123';
+
+            const fakeTruck = {
+                _id: 'truck456',
+                licensePlate: 'AB-123-CD',
+                brand: 'Volvo',
+            };
+
+            const fakeTrailer = {
+                _id: 'trailer789',
+                licensePlate: 'XY-789-ZW',
+            };
+
+            const fakeTrips = [
+                {
+                    _id: 'trip1',
+                    driver: driverId,
+                    truck: fakeTruck,
+                    trailer: fakeTrailer,
+                    departurePlace: 'Paris',
+                    arrivalPlace: 'Lyon',
+                    startDate: new Date('2024-01-01'),
+                    status: 'Planned',
+                },
+                {
+                    _id: 'trip2',
+                    driver: driverId,
+                    truck: fakeTruck,
+                    trailer: null,
+                    departurePlace: 'Lyon',
+                    arrivalPlace: 'Marseille',
+                    startDate: new Date('2024-01-15'),
+                    status: 'Completed',
+                },
+            ];
+
+            tripRepositoryStub.findAllByDriver.resolves(fakeTrips);
+
+            const result = await tripService.getDriverTrips(driverId);
+
+            expect(tripRepositoryStub.findAllByDriver.calledOnceWith(driverId)).to.be.true;
+            expect(result).to.deep.equal(fakeTrips);
+            expect(result).to.be.an('array');
+            expect(result.length).to.equal(2);
+        });
+
+        it('devrait retourner un tableau vide si le chauffeur n\'a aucun trajet', async () => {
+            const driverId = 'driver123';
+
+            tripRepositoryStub.findAllByDriver.resolves([]);
+
+            const result = await tripService.getDriverTrips(driverId);
+
+            expect(tripRepositoryStub.findAllByDriver.calledOnceWith(driverId)).to.be.true;
+            expect(result).to.deep.equal([]);
+            expect(result).to.be.an('array');
+            expect(result.length).to.equal(0);
         });
     });
 });
