@@ -41,30 +41,28 @@ const maintenanceRuleSchema = new Schema(
     }
 );
 
-maintenanceRuleSchema.pre('validate', function (next) {
+maintenanceRuleSchema.pre('validate', async function () {
     const hasPeriodKm = this.periodKm !== null && this.periodKm !== undefined;
     const hasPeriodMonths = this.periodMonths !== null && this.periodMonths !== undefined;
 
     if (this.targetEntityType === 'Trailer') {
         if (hasPeriodKm) {
-            return next(new Error('Trailer maintenance rule cannot have periodKm. Trailers do not track maintenance by kilometers.'));
+            throw new Error('Trailer maintenance rule cannot have periodKm. Trailers do not track maintenance by kilometers.');
         }
         if (!hasPeriodMonths) {
-            return next(new Error('Trailer maintenance rule must have periodMonths.'));
+            throw new Error('Trailer maintenance rule must have periodMonths.');
         }
     }
 
     if (this.targetEntityType === 'Truck') {
         if (!hasPeriodKm && !hasPeriodMonths) {
-            return next(new Error('Truck maintenance rule must have at least periodKm or periodMonths.'));
+            throw new Error('Truck maintenance rule must have at least periodKm or periodMonths.');
         }
     }
 
     if (!hasPeriodKm && !hasPeriodMonths) {
-        return next(new Error('Maintenance rule must have at least periodKm or periodMonths.'));
+        throw    new Error('Maintenance rule must have at least periodKm or periodMonths.');
     }
-
-    return next();
 });
 
 maintenanceRuleSchema.methods.getDueDate = function (lastMaintenanceDate, lastMaintenanceKm) {
