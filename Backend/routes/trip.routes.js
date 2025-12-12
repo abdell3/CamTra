@@ -20,6 +20,10 @@ const trailerRepository = new TrailerRepository(Trailer);
 const tripService = new TripService(tripRepository, userRepository, truckRepository, trailerRepository);
 const tripController = new TripController(tripService);
 
+// Route pour les chauffeurs 
+router.get('/my-trips', checkAuth, checkRole(['Chauffeur']), tripController.getMyTrips);
+
+// Routes pour les admins
 router.use(checkAuth, checkRole(['Admin']));
 
 router.post('/', tripController.create);

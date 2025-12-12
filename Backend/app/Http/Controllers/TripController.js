@@ -7,6 +7,7 @@ class TripController {
 
         this.create = this.create.bind(this);
         this.getAll = this.getAll.bind(this);
+        this.getMyTrips = this.getMyTrips.bind(this);
         this.update = this.update.bind(this);
         this.delete = this.delete.bind(this);
     }
@@ -33,6 +34,23 @@ class TripController {
             res.status(200).json({
                 succes: true,
                 message: 'Here is all the Trips : ',
+                trips
+            });
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            next(error);
+        }
+    }
+
+    async getMyTrips(req, res, next) {
+        try {
+            const driverId = req.user.userId;
+            const trips = await this.tripService.getDriverTrips(driverId);
+            res.status(200).json({
+                success: true,
+                message: 'Here are your trips',
                 trips
             });
         } catch (error) {
