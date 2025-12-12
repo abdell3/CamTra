@@ -16,7 +16,11 @@ class TireController {
     async create(req, res, next) {
         try {
             const tire = await this.tireService.create(req.body);
-            res.status(201).json(tire);
+            res.status(201).json({
+                success: true,
+                message: 'Tire created succesfully !',
+                tire
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
@@ -28,7 +32,11 @@ class TireController {
     async getAll(req, res, next) {
         try {
             const tires = await this.tireService.getAll();
-            res.status(200).json(tires);
+            res.status(200).json({
+                success: true,
+                message: 'Here are all the Tires : ',
+                tires
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
@@ -41,7 +49,11 @@ class TireController {
         try {
             const { id } = req.params;
             const tire = await this.tireService.getById(id);
-            res.status(200).json(tire);
+            res.status(200).json({
+                succes: true,
+                message: 'Here is the Tire : ',
+                tire
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
@@ -54,7 +66,10 @@ class TireController {
         try {
             const { id } = req.params;
             await this.tireService.delete(id);
-            res.status(204).send();
+            res.status(200).json({
+                success: true,
+                message: 'Deleted succesfully !'
+            });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
@@ -84,10 +99,6 @@ class TireController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success: false,
-                message: error.message || 'Failed !'
-            });
             next(error);
         }
     }
@@ -98,16 +109,13 @@ class TireController {
             const tire = await this.tireService.dismountTire(id);
             res.status(200).json({
                 success: true,
-                message: 'Tire dismounted succesfulley !'
+                message: 'Tire dismounted succesfulley !',
+                tire
             });
         } catch (error) {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success: false,
-                message: error.message || 'Failed !'
-            });
             next(error);
         }
     }

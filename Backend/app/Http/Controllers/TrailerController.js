@@ -24,10 +24,6 @@ class TrailerController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success : false,
-                message : error.message || 'Failed to create trailer'
-            });
             next(error);
         }
     }
@@ -44,10 +40,6 @@ class TrailerController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success : true,
-                message : error.message || 'Failed To get all Trailers !'
-            });
             next(error);
         }
     }
@@ -65,10 +57,6 @@ class TrailerController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                succes : false,
-                message : error.message || 'Failed To get Trailer !'
-            });
             next(error);
         }
     }
@@ -86,10 +74,6 @@ class TrailerController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                succes : false,
-                message : error.message || 'Failed to update Trailer !'
-            });
             next(error);
         }
     }
@@ -106,10 +90,6 @@ class TrailerController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success : false,
-                message : error.message || 'Failed to delete Trailer'
-            });
             next(error);
         }
     }
