@@ -11,17 +11,22 @@ const trailerSchema = new Schema(
             trim: true,
             index: true
         },
-        marque: {
+        brand: {
             type: String,
             required: true
         },
-        modele: {
+        model: {
             type: String,
             required: true
         },
         acquisitionDate: {
             type: Date,
             required: true
+        },
+        currentKm: {
+            type: Number,
+            required: true,
+            default: 0
         },
         isAvailable: {
             type: Boolean,
@@ -51,7 +56,7 @@ trailerSchema.methods.calculateRemainingDays = function (maintenanceRule) {
     const monthsToAdd = maintenanceRule.periodMonths;
 
     let nextMaintenanceDate;
-    if (typeof periodMonths === 'number') {
+    if (typeof monthsToAdd === 'number') {
         nextMaintenanceDate = new Date(lastMaintenance);
         nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + monthsToAdd);
     } else {

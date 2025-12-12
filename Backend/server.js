@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const truckRoutes = require('./routes/truck.routes');
 const trailerRoutes = require('./routes/trailer.routes');
+const tireRoutes = require('./routes/tire.routes');
 
 dotenv.config();
 
@@ -42,6 +43,8 @@ app.use('/api/users', userRoutes);
 // --- ROUTES FLOTTE (ADMIN) ---
 app.use('/api/trucks', truckRoutes);
 app.use('/api/trailers', trailerRoutes);
+// --- ROUTES PNEUS (ADMIN) ---
+app.use('/api/tires', tireRoutes);
 
 // --- MIDDLEWARES D'ERREUR ---
 app.use(notFound);
