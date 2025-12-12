@@ -44,6 +44,10 @@ const tireSchema = new Schema(
             type: Number,
             default: 0,
         },
+        totalKmDriven: {
+            type: Number,
+            default: 0,
+        },
         position: {
             type: String,
             default: null,
