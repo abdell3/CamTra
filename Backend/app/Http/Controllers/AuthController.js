@@ -30,10 +30,6 @@ class AuthController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                succes: false,
-                message: error.message || 'Failed to handle Register !'
-            });
             next(error);
         }
     }
@@ -55,10 +51,6 @@ class AuthController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                succes: false,
-                message: error.message || 'Failed to handle Login ! '
-            });
             next(error);
         }
     }
@@ -72,10 +64,6 @@ class AuthController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success: false,
-                message: error.message || 'Failed to handle RefreshToken !'
-            });
             next(error);
         }
     }

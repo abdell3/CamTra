@@ -74,10 +74,6 @@ class TruckController {
             if (error.status) {
                 res.status(error.status);
             }
-            res.json({
-                success: false,
-                message: error.message || 'Failed to delete truck'
-            });
             next(error);
         }
     }

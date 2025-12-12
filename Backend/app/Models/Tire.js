@@ -58,19 +58,17 @@ const tireSchema = new Schema(
     }
 );
 
-tireSchema.pre('validate', function (next) {
+tireSchema.pre('validate', async function () {
     const hasEntity = !!this.mountedOnEntity;
     const hasModel = !!this.mountedOnModel;
 
     if (hasEntity && !hasModel) {
-        return next(new Error('mountedOnModel is required when mountedOnEntity is set'));
+        return new Error('mountedOnModel is required when mountedOnEntity is set');
     }
 
     if (!hasEntity && hasModel) {
-        return next(new Error('mountedOnModel must be null when mountedOnEntity is null'));
+        return new Error('mountedOnModel must be null when mountedOnEntity is null');
     }
-
-    return next();
 });
 
 tireSchema.methods.getKmDriven = function (currentEntityKm) {
