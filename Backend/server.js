@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user.routes');
 const truckRoutes = require('./routes/truck.routes');
 const trailerRoutes = require('./routes/trailer.routes');
 const tireRoutes = require('./routes/tire.routes');
+const maintenanceRuleRoutes = require('./routes/maintenance_rule.routes');
 
 dotenv.config();
 
@@ -45,6 +46,8 @@ app.use('/api/trucks', truckRoutes);
 app.use('/api/trailers', trailerRoutes);
 // --- ROUTES PNEUS (ADMIN) ---
 app.use('/api/tires', tireRoutes);
+// --- ROUTES RÈGLES DE MAINTENANCE (ADMIN) ---
+app.use('/api/maintenance-rules', maintenanceRuleRoutes);
 
 // --- MIDDLEWARES D'ERREUR ---
 app.use(notFound);
