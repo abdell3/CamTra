@@ -8,6 +8,7 @@ class TireController {
         this.create = this.create.bind(this);
         this.getAll = this.getAll.bind(this);
         this.getById = this.getById.bind(this);
+        this.update = this.update.bind(this);
         this.delete = this.delete.bind(this);
         this.mount = this.mount.bind(this);
         this.dismount = this.dismount.bind(this);
@@ -53,6 +54,23 @@ class TireController {
                 succes: true,
                 message: 'Here is the Tire : ',
                 tire
+            });
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            next(error);
+        }
+    }
+
+    async update(req, res, next) {
+        try {
+            const { id } = req.params;
+            const updatedTire = await this.tireService.update(id, req.body);
+            res.status(200).json({
+                success: true,
+                message: 'Tire updated successfully !',
+                tire: updatedTire
             });
         } catch (error) {
             if (error.status) {
