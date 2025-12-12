@@ -22,6 +22,7 @@ router.use(checkAuth, checkRole(['Admin']));
 router.get('/', tireController.getAll);
 router.get('/:id', tireController.getById);
 router.post('/', tireController.create);
+router.put('/:id', tireController.update);
 router.delete('/:id', tireController.delete);
 router.post('/:id/mount', tireController.mount);
 router.post('/:id/dismount', tireController.dismount);

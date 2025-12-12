@@ -26,6 +26,22 @@ class TireService {
         return tire;
     }
 
+    async update(id, data) {
+        const existing = await this.tireRepository.findById(id);
+        if (!existing) {
+            const error = new Error('Tire not found');
+            error.status = 404;
+            throw error;
+        }
+
+        const updateData = { ...data };
+        delete updateData.mountedOnEntity;
+        delete updateData.mountedOnModel;
+        delete updateData.mountedAtKm;
+
+        return this.tireRepository.update(id, updateData);
+    }
+
     async delete(id) {
         const existing = await this.tireRepository.findById(id);
         if (!existing) {

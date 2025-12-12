@@ -352,5 +352,85 @@ describe('TireService', () => {
             }
         });
     });
+
+    describe('update', () => {
+        it('devrait mettre à jour un pneu avec succès', async () => {
+            const tireId = 'tire123';
+            const updateData = { brand: 'Michelin Updated' };
+
+            const fakeTire = {
+                id: tireId,
+                brand: 'Michelin',
+                model: 'XZA2',
+            };
+
+            const updatedTire = {
+                ...fakeTire,
+                ...updateData,
+            };
+
+            tireRepositoryStub.findById.resolves(fakeTire);
+            tireRepositoryStub.update.resolves(updatedTire);
+
+            const result = await tireService.update(tireId, updateData);
+
+            expect(tireRepositoryStub.findById.calledOnceWith(tireId)).to.be.true;
+            expect(tireRepositoryStub.update.calledOnce).to.be.true;
+
+            const updateCall = tireRepositoryStub.update.getCall(0);
+            expect(updateCall.args[0]).to.equal(tireId);
+            expect(updateCall.args[1]).to.deep.include(updateData);
+            expect(result).to.deep.equal(updatedTire);
+        });
+
+        it('devrait supprimer les champs techniques interdits du payload', async () => {
+            const tireId = 'tire123';
+            const updateData = {
+                brand: 'Goodyear',
+                mountedAtKm: 999999,
+                mountedOnModel: 'Truck',
+                mountedOnEntity: 'truck123',
+            };
+
+            const fakeTire = {
+                id: tireId,
+                brand: 'Michelin',
+            };
+
+            const updatedTire = {
+                ...fakeTire,
+                brand: 'Goodyear',
+            };
+
+            tireRepositoryStub.findById.resolves(fakeTire);
+            tireRepositoryStub.update.resolves(updatedTire);
+
+            await tireService.update(tireId, updateData);
+
+            const updateCall = tireRepositoryStub.update.getCall(0);
+            const sanitizedData = updateCall.args[1];
+
+            expect(sanitizedData).to.have.property('brand', 'Goodyear');
+            expect(sanitizedData).to.not.have.property('mountedAtKm');
+            expect(sanitizedData).to.not.have.property('mountedOnModel');
+            expect(sanitizedData).to.not.have.property('mountedOnEntity');
+        });
+
+        it('devrait lancer une erreur 404 si le pneu n\'existe pas', async () => {
+            const tireId = 'tire999';
+            const updateData = { brand: 'Michelin' };
+
+            tireRepositoryStub.findById.resolves(null);
+
+            try {
+                await tireService.update(tireId, updateData);
+                throw new Error('should have thrown');
+            } catch (error) {
+                expect(error.status).to.equal(404);
+                expect(error.message).to.include('Tire not found');
+                expect(tireRepositoryStub.update.called).to.be.false;
+            }
+        });
+    });
 });
 
