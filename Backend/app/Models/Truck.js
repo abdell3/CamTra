@@ -50,6 +50,26 @@ const truckSchema = new Schema(
     }
 );
 
+truckSchema.pre('save', async function () {
+    if (this.isNew) {
+        return;
+    }
+
+    if (!this.isModified('currentKm')) {
+        return;
+    }
+
+    try {
+        const oldTruck = await this.constructor.findById(this._id);
+        if (oldTruck && this.currentKm < oldTruck.currentKm) {
+            const error = new Error('Mileage cannot decrease');
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
+});
+
 truckSchema.methods.calculateRemainingKm = function (maintenanceRule) {
     if (!maintenanceRule || !maintenanceRule.periodKm) {
         throw new Error('Maintenance rule with periodKm is required');

@@ -42,6 +42,26 @@ const trailerSchema = new Schema(
     }
 );
 
+trailerSchema.pre('save', async function () {
+    if (this.isNew) {
+        return ;
+    }
+
+    if (!this.isModified('currentKm')) {
+        return ;
+    }
+
+    try {
+        const oldTrailer = await this.constructor.findById(this._id);
+        if (oldTrailer && this.currentKm < oldTrailer.currentKm) {
+            const error = new Error('Mileage cannot decrease');
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
+});
+
 trailerSchema.methods.calculateRemainingDays = function (maintenanceRule) {
     if (!maintenanceRule || !maintenanceRule.periodMonths) {
         throw new Error('Maintenance rule with periodMonths is required');
