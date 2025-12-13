@@ -6,36 +6,36 @@ const TRIP_STATUS = ['Planned', 'InProgress', 'Completed', 'Cancelled'];
 
 const tripSchema = new Schema(
     {
-        driver: {
+        assignedDriverId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
             required: true,
         },
-        truck: {
+        assignedTruckId: {
             type: Schema.Types.ObjectId,
             ref: 'Truck',
             required: true,
         },
-        trailer: {
+        assignedTrailerId: {
             type: Schema.Types.ObjectId,
             ref: 'Trailer',
             default: null,
         },
-        departurePlace: {
+        departureSite: {
             type: String,
             required: true,
             trim: true,
         },
-        arrivalPlace: {
+        arrivalSite: {
             type: String,
             required: true,
             trim: true,
         },
-        startDate: {
+        plannedStartDate: {
             type: Date,
             required: true,
         },
-        endDate: {
+        plannedEndDate: {
             type: Date,
             required: true,
         },
@@ -48,27 +48,15 @@ const tripSchema = new Schema(
             type: Number,
             required: true,
         },
-        endKm: {
-            type: Number,
-            default: null,
-        },
-        fuelVolume: {
-            type: Number,
-            default: null,
-        },
-        comments: {
-            type: String,
-            default: null,
-        },
     },
     {
         timestamps: true,
     }
 );
 
-tripSchema.pre('validate', function (next) {
-    if (this.endDate && this.startDate && this.endDate <= this.startDate) {
-        throw new Error('endDate must be after startDate');
+tripSchema.pre('validate', async function () {
+    if (this.plannedEndDate && this.plannedStartDate && this.plannedEndDate <= this.plannedStartDate) {
+        throw new Error('plannedEndDate must be after plannedStartDate');
     }
 });
 
