@@ -32,8 +32,22 @@ const tripReportSchema = new Schema(
     },
     {
         timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
 );
+
+tripReportSchema.virtual('distance').get(function () {
+    return this.endKmReading - this.startKmReading;
+});
+
+tripReportSchema.virtual('consumption').get(function () {
+    const distance = this.endKmReading - this.startKmReading;
+    if (distance === 0) {
+        return 0;
+    }
+    return (this.gasoilVolumeFilled / distance) * 100;
+});
 
 tripReportSchema.pre('validate', function (next) {
     if (this.endKmReading < this.startKmReading) {
