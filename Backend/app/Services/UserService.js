@@ -21,6 +21,13 @@ class UserService {
     }
 
     async createDriver(data) {
+        if(Array.isArray(data)) {
+            const payload = data.map(driver => ({
+                ...driver,
+                role: 'Chauffeur'
+            }));
+            return this.userRepository.create(payload);
+        }
         const payload = { ...data, role: 'Chauffeur' };
         return this.userRepository.create(payload);
     }
