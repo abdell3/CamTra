@@ -8,22 +8,22 @@ class TripRepository extends BaseRepository {
     async findActiveTripsByDriver(driverId) {
         return this.model
             .find({
-                driver: driverId,
+                assignedDriverId: driverId,
                 status: { $in: ['Planned', 'InProgress'] },
             })
-            .populate('truck')
-            .populate('trailer');
+            .populate('assignedTruckId')
+            .populate('assignedTrailerId');
     }
 
     async findAllByDriver(driverId) {
         return this.model
             .find({
-                driver: driverId,
+                assignedDriverId: driverId,
                 status: { $ne: 'Cancelled' },
             })
-            .sort({ startDate: 1 })
-            .populate('truck')
-            .populate('trailer');
+            .sort({ plannedStartDate: 1 })
+            .populate('assignedTruckId')
+            .populate('assignedTrailerId');
     }
 }
 

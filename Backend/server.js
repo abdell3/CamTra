@@ -12,6 +12,7 @@ const trailerRoutes = require('./routes/trailer.routes');
 const tireRoutes = require('./routes/tire.routes');
 const maintenanceRuleRoutes = require('./routes/maintenance_rule.routes');
 const tripRoutes = require('./routes/trip.routes');
+const tripReportRoutes = require('./routes/trip-report.routes');
 
 dotenv.config();
 
@@ -51,6 +52,8 @@ app.use('/api/tires', tireRoutes);
 app.use('/api/maintenance-rules', maintenanceRuleRoutes);
 // --- ROUTES TRIPS (ADMIN) ---
 app.use('/api/trips', tripRoutes);
+// --- ROUTES TRIP REPORTS (CHAUFFEUR/ADMIN) ---
+app.use('/api/trip-reports', tripReportRoutes);
 
 // --- MIDDLEWARES D'ERREUR ---
 app.use(notFound);

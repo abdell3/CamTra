@@ -10,7 +10,7 @@ class TripService {
     }
 
     async createTrip(data) {
-        const { driver, truck, trailer } = data;
+        const { driver, truck, trailer, departurePlace, arrivalPlace, startDate, endDate } = data;
 
         const user = await this.userRepository.findById(driver);
         if (!user) {
@@ -59,7 +59,13 @@ class TripService {
         }
 
         const tripPayload = {
-            ...data,
+            assignedDriverId: driver,
+            assignedTruckId: truck,
+            assignedTrailerId: trailer || null,
+            departureSite: departurePlace,
+            arrivalSite: arrivalPlace,
+            plannedStartDate: startDate,
+            plannedEndDate: endDate,
             status: 'Planned',
             startKm: truckEntity.currentKm || 0,
         };
@@ -77,9 +83,9 @@ class TripService {
     async getAll() {
         return this.tripRepository.model
             .find({})
-            .populate('driver')
-            .populate('truck')
-            .populate('trailer');
+            .populate('assignedDriverId')
+            .populate('assignedTruckId')
+            .populate('assignedTrailerId');
     }
 
     async getDriverTrips(driverId) {
@@ -94,7 +100,7 @@ class TripService {
             throw error;
         }
 
-        const forbiddenFields = ['driver', 'truck', 'trailer'];
+        const forbiddenFields = ['assignedDriverId', 'assignedTruckId', 'assignedTrailerId'];
         const updateData = { ...data };
         forbiddenFields.forEach((field) => {
             if (field in updateData) {
@@ -108,8 +114,8 @@ class TripService {
     async delete(id) {
         const trip = await this.tripRepository.model
             .findById(id)
-            .populate('truck')
-            .populate('trailer');
+            .populate('assignedTruckId')
+            .populate('assignedTrailerId');
 
         if (!trip) {
             const error = new Error('Trip not found');
@@ -117,11 +123,11 @@ class TripService {
             throw error;
         }
 
-        if (trip.truck) {
-            await this.truckRepository.update(trip.truck._id, { isAvailable: true });
+        if (trip.assignedTruckId) {
+            await this.truckRepository.update(trip.assignedTruckId._id, { isAvailable: true });
         }
-        if (trip.trailer) {
-            await this.trailerRepository.update(trip.trailer._id, { isAvailable: true });
+        if (trip.assignedTrailerId) {
+            await this.trailerRepository.update(trip.assignedTrailerId._id, { isAvailable: true });
         }
 
         return this.tripRepository.delete(id);
