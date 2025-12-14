@@ -12,8 +12,8 @@ class StatsService {
         // Agrégation pour calculer totalDistance et totalFuel en une seule requête
         const reportStats = await this.tripReportRepository.model.aggregate([
             {
-                project: {
-                    distance: {$ $subtract: ['$endKmReading', '$startKmReading'] },
+                $project: {
+                    distance: { $subtract: ['$endKmReading', '$startKmReading'] },
                     fuel: '$gasoilVolumeFilled'
                 }
             },
