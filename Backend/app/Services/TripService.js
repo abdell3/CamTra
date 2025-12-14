@@ -10,9 +10,16 @@ class TripService {
     }
 
     async createTrip(data) {
-        const { driver, truck, trailer, departurePlace, arrivalPlace, startDate, endDate } = data;
+        console.log('debug : ', data);
+        const assignedDriverId = (data.assignedDriverId || data.driver)?.toString().trim();
+        const assignedTruckId = (data.assignedTruckId || data.truck)?.toString().trim();
+        const assignedTrailerId = (data.assignedTrailerId || data.trailer)?.toString().trim() || null;
+        const departureSite = data.departureSite || data.departurePlace;
+        const arrivalSite = data.arrivalSite || data.arrivalPlace;
+        const plannedStartDate = data.plannedStartDate || data.startDate;
+        const plannedEndDate = data.plannedEndDate || data.endDate;
 
-        const user = await this.userRepository.findById(driver);
+        const user = await this.userRepository.findById(assignedDriverId);
         if (!user) {
             const error = new Error('Driver not found');
             error.status = 404;
@@ -24,14 +31,14 @@ class TripService {
             throw error;
         }
 
-        const activeTrips = await this.tripRepository.findActiveTripsByDriver(driver);
+        const activeTrips = await this.tripRepository.findActiveTripsByDriver(assignedDriverId);
         if (activeTrips && activeTrips.length > 0) {
             const error = new Error('Driver already has an active trip');
             error.status = 400;
             throw error;
         }
 
-        const truckEntity = await this.truckRepository.findById(truck);
+        const truckEntity = await this.truckRepository.findById(assignedTruckId);
         if (!truckEntity) {
             const error = new Error('Truck not found');
             error.status = 404;
@@ -44,8 +51,8 @@ class TripService {
         }
 
         let trailerEntity = null;
-        if (trailer) {
-            trailerEntity = await this.trailerRepository.findById(trailer);
+        if (assignedTrailerId) {
+            trailerEntity = await this.trailerRepository.findById(assignedTrailerId);
             if (!trailerEntity) {
                 const error = new Error('Trailer not found');
                 error.status = 404;
@@ -59,13 +66,13 @@ class TripService {
         }
 
         const tripPayload = {
-            assignedDriverId: driver,
-            assignedTruckId: truck,
-            assignedTrailerId: trailer || null,
-            departureSite: departurePlace,
-            arrivalSite: arrivalPlace,
-            plannedStartDate: startDate,
-            plannedEndDate: endDate,
+            assignedDriverId,
+            assignedTruckId,
+            assignedTrailerId,
+            departureSite,
+            arrivalSite,
+            plannedStartDate,
+            plannedEndDate,
             status: 'Planned',
             startKm: truckEntity.currentKm || 0,
         };
@@ -90,6 +97,29 @@ class TripService {
 
     async getDriverTrips(driverId) {
         return this.tripRepository.findAllByDriver(driverId);
+    }
+
+    async startTrip(tripId, driverId) {
+        const trip = await this.tripRepository.findById(tripId);
+        if (!trip) {
+            const error = new Error('Trip not found');
+            error.status = 404;
+            throw error;
+        }
+
+        if (trip.assignedDriverId.toString() !== driverId) {
+            const error = new Error('Unauthorized: You are not the assigned driver for this trip');
+            error.status = 403;
+            throw error;
+        }
+
+        if (!trip.canBeStarted()) {
+            const error = new Error('Trip cannot be started. It must be in Planned status');
+            error.status = 400;
+            throw error;
+        }
+
+        return this.tripRepository.update(tripId, { status: 'InProgress' });
     }
 
     async update(id, data) {

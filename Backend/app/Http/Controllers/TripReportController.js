@@ -12,7 +12,8 @@ class TripReportController {
 
     async create(req, res, next) {
         try {
-            const report = await this.tripReportService.createReport(req.body);
+            const driverId = req.user.userId;
+            const report = await this.tripReportService.createReport(req.body, driverId);
             res.status(201).json({
                 success: true,
                 message: 'Trip report created successfully and trip closed',
