@@ -29,6 +29,7 @@ router.use(checkAuth, checkRole(['Admin']));
 
 router.post('/', tripController.create);
 router.get('/', tripController.getAll);
+router.get('/:id/pdf', tripController.downloadMissionOrder);
 router.put('/:id', tripController.update);
 router.delete('/:id', tripController.delete);
 
