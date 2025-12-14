@@ -1,9 +1,12 @@
+const PdfService = require('../Services/PdfService');
+
 class TripController {
     constructor(tripService) {
         if (!tripService) {
             throw new Error('TripService dependency is required');
         }
         this.tripService = tripService;
+        this.pdfService = new PdfService();
 
         this.create = this.create.bind(this);
         this.getAll = this.getAll.bind(this);
@@ -11,6 +14,7 @@ class TripController {
         this.start = this.start.bind(this);
         this.update = this.update.bind(this);
         this.delete = this.delete.bind(this);
+        this.downloadMissionOrder = this.downloadMissionOrder.bind(this);
     }
 
     async create(req, res, next) {
@@ -102,6 +106,39 @@ class TripController {
             const { id } = req.params;
             await this.tripService.delete(id);
             res.status(204).send();
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            next(error);
+        }
+    }
+
+    async downloadMissionOrder(req, res, next) {
+        try {
+            const { id } = req.params;
+            const trip = await this.tripService.tripRepository.model
+                .findById(id)
+                .populate('assignedDriverId')
+                .populate('assignedTruckId')
+                .populate('assignedTrailerId');
+
+            if (!trip) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Trip not found'
+                });
+            }
+
+            const driver = trip.assignedDriverId;
+            const truck = trip.assignedTruckId;
+            const trailer = trip.assignedTrailerId;
+
+            const pdfBuffer = await this.pdfService.generateMissionOrder(trip, driver, truck, trailer);
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="mission_order_${id}.pdf"`);
+            res.send(pdfBuffer);
         } catch (error) {
             if (error.status) {
                 res.status(error.status);

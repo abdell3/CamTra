@@ -10,7 +10,6 @@ class TripService {
     }
 
     async createTrip(data) {
-        console.log('debug : ', data);
         const assignedDriverId = (data.assignedDriverId || data.driver)?.toString().trim();
         const assignedTruckId = (data.assignedTruckId || data.truck)?.toString().trim();
         const assignedTrailerId = (data.assignedTrailerId || data.trailer)?.toString().trim() || null;
