@@ -1,4 +1,4 @@
-const PdfService = require('../Services/PdfService');
+const PdfService = require('../../Services/PdfService');
 
 class TripController {
     constructor(tripService) {
