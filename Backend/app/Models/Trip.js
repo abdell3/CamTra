@@ -60,5 +60,12 @@ tripSchema.pre('validate', async function () {
     }
 });
 
-module.exports = mongoose.model('Trip', tripSchema);
+tripSchema.methods.isCompleted = function () {
+    return this.status === 'Completed';
+};
 
+tripSchema.methods.canBeStarted = function () {
+    return this.status === 'Planned';
+};
+
+module.exports = mongoose.model('Trip', tripSchema);

@@ -8,6 +8,7 @@ class TripController {
         this.create = this.create.bind(this);
         this.getAll = this.getAll.bind(this);
         this.getMyTrips = this.getMyTrips.bind(this);
+        this.start = this.start.bind(this);
         this.update = this.update.bind(this);
         this.delete = this.delete.bind(this);
     }
@@ -52,6 +53,24 @@ class TripController {
                 success: true,
                 message: 'Here are your trips',
                 trips
+            });
+        } catch (error) {
+            if (error.status) {
+                res.status(error.status);
+            }
+            next(error);
+        }
+    }
+
+    async start(req, res, next) {
+        try {
+            const { id } = req.params;
+            const driverId = req.user.userId;
+            const trip = await this.tripService.startTrip(id, driverId);
+            res.status(200).json({
+                success: true,
+                message: 'Trip started successfully',
+                trip
             });
         } catch (error) {
             if (error.status) {

@@ -9,13 +9,19 @@ class TripReportService {
         this.trailerRepository = trailerRepository;
     }
 
-    async createReport(data) {
+    async createReport(data, driverId) {
         const { tripId, startKmReading, endKmReading, gasoilVolumeFilled, driverRemarks } = data;
 
         const trip = await this.tripRepository.findById(tripId);
         if (!trip) {
             const error = new Error('Trip not found');
             error.status = 404;
+            throw error;
+        }
+
+        if (trip.assignedDriverId.toString() !== driverId) {
+            const error = new Error('Unauthorized: You are not the assigned driver for this trip');
+            error.status = 403;
             throw error;
         }
 

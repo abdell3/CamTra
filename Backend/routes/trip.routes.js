@@ -22,6 +22,7 @@ const tripController = new TripController(tripService);
 
 // Route pour les chauffeurs 
 router.get('/my-trips', checkAuth, checkRole(['Chauffeur']), tripController.getMyTrips);
+router.patch('/:id/start', checkAuth, checkRole(['Chauffeur']), tripController.start);
 
 // Routes pour les admins
 router.use(checkAuth, checkRole(['Admin']));
