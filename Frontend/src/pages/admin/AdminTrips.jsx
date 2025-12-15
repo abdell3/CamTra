@@ -19,8 +19,10 @@ const CreateTripModal = ({ isOpen, onClose, onSubmit }) => {
   const [plannedEndDate, setPlannedEndDate] = useState('');
   const [driverId, setDriverId] = useState('');
   const [truckId, setTruckId] = useState('');
+  const [trailerId, setTrailerId] = useState('');
   const [drivers, setDrivers] = useState([]);
   const [trucks, setTrucks] = useState([]);
+  const [trailers, setTrailers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [listsLoading, setListsLoading] = useState(false);
 
@@ -28,14 +30,18 @@ const CreateTripModal = ({ isOpen, onClose, onSubmit }) => {
     const loadLists = async () => {
       try {
         setListsLoading(true);
-        const [driversRes, trucksRes] = await Promise.all([
+        const [driversRes, trucksRes, trailersRes] = await Promise.all([
           api.get('/users/drivers'),
           api.get('/trucks'),
+          api.get('/trailers'),
         ]);
         setDrivers(driversRes.data?.drivers || driversRes.data || []);
         const allTrucks = trucksRes.data?.trucks || trucksRes.data || [];
         const available = allTrucks.filter((t) => t.isAvailable !== false);
         setTrucks(available);
+        const allTrailers = trailersRes.data?.trailers || trailersRes.data || [];
+        const availableTrailers = allTrailers.filter((t) => t.isAvailable !== false);
+        setTrailers(availableTrailers);
       } catch (err) {
         const message = err.response?.data?.message || 'Impossible de charger les données';
         toast.error(message);
@@ -51,6 +57,7 @@ const CreateTripModal = ({ isOpen, onClose, onSubmit }) => {
       setPlannedEndDate('');
       setDriverId('');
       setTruckId('');
+      setTrailerId('');
       loadLists();
     }
   }, [isOpen]);
@@ -62,14 +69,20 @@ const CreateTripModal = ({ isOpen, onClose, onSubmit }) => {
     if (loading) return;
     try {
       setLoading(true);
-      await onSubmit({
+      const payload = {
         assignedDriverId: driverId,
         assignedTruckId: truckId,
         departureSite,
         arrivalSite,
         plannedStartDate,
         plannedEndDate,
-      });
+      };
+      if (trailerId) {
+        payload.assignedTrailerId = trailerId;
+      } else {
+        payload.assignedTrailerId = null;
+      }
+      await onSubmit(payload);
       onClose();
     } catch (err) {
       // onSubmit gère le toast
@@ -179,6 +192,24 @@ const CreateTripModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm text-slate-200 flex items-center gap-2">
+              <Truck className="h-4 w-4 text-cyan-400" /> Remorque (Optionnel)
+            </label>
+            <select
+              value={trailerId}
+              onChange={(e) => setTrailerId(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
+            >
+              <option value="">Aucune remorque</option>
+              {trailers.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.brand} {t.model} - {t.immatriculation}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {listsLoading && (
             <div className="flex items-center gap-2 text-sm text-slate-300">
               <AlertCircle className="h-4 w-4 text-cyan-400" />
@@ -249,6 +280,7 @@ const TripsTable = ({ trips = [], loading }) => {
               <th className="px-4 py-3 font-semibold">Trajet</th>
               <th className="px-4 py-3 font-semibold">Chauffeur</th>
               <th className="px-4 py-3 font-semibold">Camion</th>
+              <th className="px-4 py-3 font-semibold">Remorque</th>
               <th className="px-4 py-3 font-semibold">Statut</th>
             </tr>
           </thead>
@@ -270,6 +302,11 @@ const TripsTable = ({ trips = [], loading }) => {
                 <td className="px-4 py-3 text-slate-200">
                   {trip.assignedTruckId
                     ? `${trip.assignedTruckId.immatriculation || ''} • ${trip.assignedTruckId.brand || ''}`
+                    : '—'}
+                </td>
+                <td className="px-4 py-3 text-slate-200">
+                  {trip.assignedTrailerId
+                    ? trip.assignedTrailerId.immatriculation || '—'
                     : '—'}
                 </td>
                 <td className="px-4 py-3">

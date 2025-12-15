@@ -21,15 +21,20 @@ const tripService = new TripService(tripRepository, userRepository, truckReposit
 const tripController = new TripController(tripService);
 
 // Route pour les chauffeurs 
-router.get('/my-trips', checkAuth, checkRole(['Chauffeur']), tripController.getMyTrips);
-router.patch('/:id/start', checkAuth, checkRole(['Chauffeur']), tripController.start);
+router.use(checkAuth);
 
-// Routes pour les admins
-router.use(checkAuth, checkRole(['Admin']));
 
+router.get('/my-trips', checkRole(['Chauffeur']), tripController.getMyTrips);
+router.patch('/:id/start', checkRole(['Chauffeur']), tripController.start);
+// Route accessible aux Admins et Chauffeurs (PDF)
+router.get('/:id/pdf', checkRole(['Admin', 'Chauffeur']), tripController.downloadMissionOrder);
+
+// Middleware restrictif pour la suite (Admins seulement)
+router.use(checkRole(['Admin']));
+
+// Routes Admin (CRUD)
 router.post('/', tripController.create);
 router.get('/', tripController.getAll);
-router.get('/:id/pdf', tripController.downloadMissionOrder);
 router.put('/:id', tripController.update);
 router.delete('/:id', tripController.delete);
 
