@@ -16,15 +16,15 @@ const AdminLayout = () => {
   const isActive = (path) => location.pathname.startsWith(path);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-64 bg-night text-white flex flex-col">
-        <div className="px-6 py-6 flex items-center gap-3 border-b border-night-light">
-          <div className="h-10 w-10 rounded-full bg-brick/20 flex items-center justify-center text-brick">
+    <div className="min-h-screen flex">
+      <aside className="w-64 bg-slate-900/80 backdrop-blur-md border-r border-white/5 text-slate-200 flex flex-col">
+        <div className="px-6 py-6 flex items-center gap-3 border-b border-white/5">
+          <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white">
             <Truck className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm text-gray-300">CamTra</p>
-            <p className="text-lg font-semibold">Admin</p>
+            <p className="text-sm text-slate-300">CamTra</p>
+            <p className="text-lg font-semibold text-white">Admin</p>
           </div>
         </div>
 
@@ -37,8 +37,8 @@ const AdminLayout = () => {
                 to={to}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
                   active
-                    ? 'bg-brick text-white'
-                    : 'text-gray-200 hover:bg-night-light hover:text-white'
+                    ? 'bg-primary-gradient-start text-white'
+                    : 'text-slate-200 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -52,7 +52,7 @@ const AdminLayout = () => {
           <button
             type="button"
             onClick={logout}
-            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-300 hover:bg-brick hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-500/20 hover:text-white transition-colors"
           >
             <LogOut className="h-5 w-5" />
             Déconnexion
@@ -60,7 +60,7 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 bg-transparent">
         <Outlet />
       </main>
     </div>

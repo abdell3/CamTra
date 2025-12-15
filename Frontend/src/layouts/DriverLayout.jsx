@@ -10,7 +10,7 @@ const DriverLayout = () => {
     <div className="relative min-h-screen">
       <BackgroundBlobs />
 
-      <header className="relative z-10 h-16 px-6 flex items-center justify-between border-b border-white/10 bg-white/10 backdrop-blur-md shadow-lg">
+      <header className="relative z-10 h-16 px-6 flex items-center justify-between border-b border-white/5 bg-slate-900/80 backdrop-blur-md shadow-lg">
         <div className="text-lg font-semibold text-white">CamTra Driver</div>
         <div className="flex items-center gap-6">
           <Link
@@ -35,7 +35,7 @@ const DriverLayout = () => {
         </div>
       </header>
 
-      <main className="relative z-10 p-4">
+      <main className="relative z-10 p-4 bg-transparent">
         <Outlet />
       </main>
     </div>
