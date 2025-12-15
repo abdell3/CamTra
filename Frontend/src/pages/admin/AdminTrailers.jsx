@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Container } from 'lucide-react';
+import { Plus, Container, Pencil, Trash2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -8,22 +8,31 @@ const statusBadge = (isAvailable) =>
     ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30'
     : 'bg-red-500/20 text-red-200 border border-red-400/30';
 
-const AddTrailerModal = ({ isOpen, onClose, onSubmit }) => {
+const AddTrailerModal = ({ isOpen, onClose, onSubmit, editingTrailer = null }) => {
   const [immatriculation, setImmatriculation] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  const isEditMode = !!editingTrailer;
+
   useEffect(() => {
     if (isOpen) {
-      setImmatriculation('');
-      setBrand('');
-      setModel('');
-      setIsAvailable(true);
+      if (editingTrailer) {
+        setImmatriculation(editingTrailer.immatriculation || '');
+        setBrand(editingTrailer.brand || '');
+        setModel(editingTrailer.model || '');
+        setIsAvailable(editingTrailer.isAvailable !== false);
+      } else {
+        setImmatriculation('');
+        setBrand('');
+        setModel('');
+        setIsAvailable(true);
+      }
       setLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, editingTrailer]);
 
   if (!isOpen) return null;
 
@@ -31,14 +40,17 @@ const AddTrailerModal = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await onSubmit({
+      const payload = {
         immatriculation,
         brand,
         model,
         isAvailable,
-        acquisitionDate: new Date().toISOString(),
-        currentKm: 0,
-      });
+      };
+      if (!isEditMode) {
+        payload.acquisitionDate = new Date().toISOString();
+        payload.currentKm = 0;
+      }
+      await onSubmit(payload, editingTrailer?._id);
       onClose();
     } catch (err) {
       // onSubmit handles toast
@@ -57,8 +69,12 @@ const AddTrailerModal = ({ isOpen, onClose, onSubmit }) => {
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold text-white mb-1">Nouvelle Remorque</h2>
-        <p className="text-sm text-slate-300 mb-4">Ajoutez une remorque à la flotte</p>
+        <h2 className="text-xl font-semibold text-white mb-1">
+          {isEditMode ? 'Modifier la Remorque' : 'Nouvelle Remorque'}
+        </h2>
+        <p className="text-sm text-slate-300 mb-4">
+          {isEditMode ? 'Modifier les informations de la remorque' : 'Ajoutez une remorque à la flotte'}
+        </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
@@ -124,7 +140,7 @@ const AddTrailerModal = ({ isOpen, onClose, onSubmit }) => {
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Création...' : 'Créer'}
+              {loading ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier' : 'Créer')}
             </button>
           </div>
         </form>
@@ -133,7 +149,7 @@ const AddTrailerModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-const TrailersTable = ({ trailers = [], loading }) => {
+const TrailersTable = ({ trailers = [], loading, onEdit, onDelete }) => {
   const rows = useMemo(() => trailers, [trailers]);
 
   if (loading) {
@@ -173,6 +189,7 @@ const TrailersTable = ({ trailers = [], loading }) => {
               <th className="px-4 py-3 font-semibold">Marque</th>
               <th className="px-4 py-3 font-semibold">Modèle</th>
               <th className="px-4 py-3 font-semibold">Statut</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -190,6 +207,26 @@ const TrailersTable = ({ trailers = [], loading }) => {
                     {trailer.isAvailable ? 'Disponible' : 'En mission'}
                   </span>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(trailer)}
+                      className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                      title="Modifier"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(trailer._id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -203,6 +240,7 @@ const AdminTrailers = () => {
   const [trailers, setTrailers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTrailer, setEditingTrailer] = useState(null);
 
   const loadTrailers = async () => {
     try {
@@ -217,20 +255,39 @@ const AdminTrailers = () => {
     }
   };
 
-  const handleAddTrailer = async (payload) => {
+  const handleSubmitTrailer = async (payload, trailerId) => {
     try {
-      await api.post('/trailers', payload);
-      toast.success('Remorque créée avec succès');
+      if (trailerId) {
+        await api.put(`/trailers/${trailerId}`, payload);
+        toast.success('Remorque modifiée avec succès');
+      } else {
+        await api.post('/trailers', payload);
+        toast.success('Remorque créée avec succès');
+      }
       await loadTrailers();
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur lors de la création de la remorque';
-      if (err.response?.status === 400 || err.response?.status === 409) {
-        // Erreur de validation ou duplicata
-        toast.error(message);
-      } else {
-        toast.error(message);
-      }
+      const message = err.response?.data?.message || `Erreur lors de la ${trailerId ? 'modification' : 'création'} de la remorque`;
+      toast.error(message);
       throw err;
+    }
+  };
+
+  const handleEditTrailer = (trailer) => {
+    setEditingTrailer(trailer);
+    setModalOpen(true);
+  };
+
+  const handleDeleteTrailer = async (trailerId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette remorque ?')) {
+      return;
+    }
+    try {
+      await api.delete(`/trailers/${trailerId}`);
+      toast.success('Remorque supprimée avec succès');
+      await loadTrailers();
+    } catch (err) {
+      const message = err.response?.data?.message || 'Erreur lors de la suppression de la remorque';
+      toast.error(message);
     }
   };
 
@@ -248,7 +305,10 @@ const AdminTrailers = () => {
         </div>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setEditingTrailer(null);
+            setModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
@@ -256,12 +316,16 @@ const AdminTrailers = () => {
         </button>
       </div>
 
-      <TrailersTable trailers={trailers} loading={loading} />
+      <TrailersTable trailers={trailers} loading={loading} onEdit={handleEditTrailer} onDelete={handleDeleteTrailer} />
 
       <AddTrailerModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleAddTrailer}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingTrailer(null);
+        }}
+        onSubmit={handleSubmitTrailer}
+        editingTrailer={editingTrailer}
       />
     </div>
   );
