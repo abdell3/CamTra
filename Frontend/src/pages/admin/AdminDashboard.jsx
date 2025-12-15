@@ -39,18 +39,36 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const { data } = await api.get('/stats/dashboard');
-      if (data?.stats) {
-        setStats({
-          totalTrips: data.stats.totalTrips || 0,
-          inProgress: data.stats.inProgress || 0,
-          completed: data.stats.completed || 0,
-          totalKm: data.stats.totalKm || 0,
-        });
+      
+      
+      if (data?.data) {
+        const statsData = data.data;
+        const totalDistance = statsData.totalDistance || 0;
+        
+        try {
+          const { data: tripsData } = await api.get('/trips');
+          const trips = tripsData?.trips || tripsData || [];
+          const totalTrips = trips.length;
+          const completed = trips.filter((t) => t.status === 'Completed').length;
+          
+          setStats({
+            totalTrips,
+            inProgress: statsData.trucksStatus?.inMission || 0,
+            completed,
+            totalKm: totalDistance, 
+          });
+        } catch (tripsErr) {
+          setStats({
+            totalTrips: 0,
+            inProgress: statsData.trucksStatus?.inMission || 0,
+            completed: 0,
+            totalKm: totalDistance,
+          });
+        }
       } else {
         throw new Error('Fallback to trips');
       }
     } catch (err) {
-      // Fallback if 404 or missing data
       try {
         const { data: tripsData } = await api.get('/trips');
         const computed = computeFromTrips(tripsData?.trips || tripsData || []);

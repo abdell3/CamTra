@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { User, Mail, Plus, Search } from 'lucide-react';
+import { User, Mail, Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -12,22 +12,31 @@ const Avatar = ({ firstName = '', lastName = '' }) => {
   );
 };
 
-const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
+const AddDriverModal = ({ isOpen, onClose, onSubmit, editingDriver = null }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isEditMode = !!editingDriver;
+
   useEffect(() => {
     if (isOpen) {
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
+      if (editingDriver) {
+        setFirstName(editingDriver.firstName || '');
+        setLastName(editingDriver.lastName || '');
+        setEmail(editingDriver.email || '');
+        setPassword(''); // Ne pas pré-remplir le mot de passe
+      } else {
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPassword('');
+      }
       setLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, editingDriver]);
 
   if (!isOpen) return null;
 
@@ -35,7 +44,11 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await onSubmit({ firstName, lastName, email, password, role: 'Chauffeur' });
+      const payload = { firstName, lastName, email, role: 'Chauffeur' };
+      if (password) {
+        payload.password = password;
+      }
+      await onSubmit(payload, editingDriver?._id);
       onClose();
     } catch (err) {
       // onSubmit gère les toasts
@@ -54,8 +67,12 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold text-white mb-1">Nouveau Chauffeur</h2>
-        <p className="text-sm text-slate-300 mb-4">Créer un compte chauffeur</p>
+        <h2 className="text-xl font-semibold text-white mb-1">
+          {isEditMode ? 'Modifier le Chauffeur' : 'Nouveau Chauffeur'}
+        </h2>
+        <p className="text-sm text-slate-300 mb-4">
+          {isEditMode ? 'Modifier les informations du chauffeur' : 'Créer un compte chauffeur'}
+        </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -97,10 +114,12 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-slate-200">Mot de passe</label>
+            <label className="text-sm text-slate-200">
+              Mot de passe {isEditMode ? '(laisser vide pour ne pas modifier)' : '*'}
+            </label>
             <input
               type="password"
-              required
+              required={!isEditMode}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
@@ -122,7 +141,7 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Création...' : 'Créer'}
+              {loading ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier' : 'Créer')}
             </button>
           </div>
         </form>
@@ -131,7 +150,7 @@ const AddDriverModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-const DriversTable = ({ drivers = [], loading }) => {
+const DriversTable = ({ drivers = [], loading, onEdit, onDelete }) => {
   const rows = useMemo(() => drivers, [drivers]);
 
   if (loading) {
@@ -171,6 +190,7 @@ const DriversTable = ({ drivers = [], loading }) => {
               <th className="px-4 py-3 font-semibold">Email</th>
               <th className="px-4 py-3 font-semibold">Statut</th>
               <th className="px-4 py-3 font-semibold">Inscription</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -196,6 +216,26 @@ const DriversTable = ({ drivers = [], loading }) => {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-200">{dateStr}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(driver)}
+                        className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                        title="Modifier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(driver._id)}
+                        className="p-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -210,6 +250,7 @@ const AdminDrivers = () => {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState(null);
 
   const loadDrivers = async () => {
     try {
@@ -224,10 +265,40 @@ const AdminDrivers = () => {
     }
   };
 
-  const handleAddDriver = async (payload) => {
-    await api.post('/users/drivers', payload);
-    toast.success('Chauffeur créé avec succès');
-    await loadDrivers();
+  const handleSubmitDriver = async (payload, driverId) => {
+    try {
+      if (driverId) {
+        await api.put(`/users/${driverId}`, payload);
+        toast.success('Chauffeur modifié avec succès');
+      } else {
+        await api.post('/users/drivers', payload);
+        toast.success('Chauffeur créé avec succès');
+      }
+      await loadDrivers();
+    } catch (err) {
+      const message = err.response?.data?.message || `Erreur lors de la ${driverId ? 'modification' : 'création'} du chauffeur`;
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const handleEditDriver = (driver) => {
+    setEditingDriver(driver);
+    setModalOpen(true);
+  };
+
+  const handleDeleteDriver = async (driverId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur ?')) {
+      return;
+    }
+    try {
+      await api.delete(`/users/${driverId}`);
+      toast.success('Chauffeur supprimé avec succès');
+      await loadDrivers();
+    } catch (err) {
+      const message = err.response?.data?.message || 'Erreur lors de la suppression du chauffeur';
+      toast.error(message);
+    }
   };
 
   useEffect(() => {
@@ -244,7 +315,10 @@ const AdminDrivers = () => {
         </div>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setEditingDriver(null);
+            setModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
@@ -252,12 +326,16 @@ const AdminDrivers = () => {
         </button>
       </div>
 
-      <DriversTable drivers={drivers} loading={loading} />
+      <DriversTable drivers={drivers} loading={loading} onEdit={handleEditDriver} onDelete={handleDeleteDriver} />
 
       <AddDriverModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleAddDriver}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingDriver(null);
+        }}
+        onSubmit={handleSubmitDriver}
+        editingDriver={editingDriver}
       />
     </div>
   );

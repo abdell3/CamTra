@@ -1,44 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Truck, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Container, Pencil, Trash2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
-
-const formatKm = (value = 0) =>
-  `${Number(value || 0).toLocaleString('fr-FR')} km`;
 
 const statusBadge = (isAvailable) =>
   isAvailable
     ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30'
     : 'bg-red-500/20 text-red-200 border border-red-400/30';
 
-const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
+const AddTrailerModal = ({ isOpen, onClose, onSubmit, editingTrailer = null }) => {
   const [immatriculation, setImmatriculation] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
-  const [currentKm, setCurrentKm] = useState(0);
-  const [acquisitionDate, setAcquisitionDate] = useState('');
+  const [isAvailable, setIsAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const isEditMode = !!editingTruck;
+  const isEditMode = !!editingTrailer;
 
   useEffect(() => {
     if (isOpen) {
-      if (editingTruck) {
-        setImmatriculation(editingTruck.immatriculation || '');
-        setBrand(editingTruck.brand || '');
-        setModel(editingTruck.model || '');
-        setCurrentKm(editingTruck.currentKm || 0);
-        setAcquisitionDate(editingTruck.acquisitionDate ? new Date(editingTruck.acquisitionDate).toISOString().split('T')[0] : '');
+      if (editingTrailer) {
+        setImmatriculation(editingTrailer.immatriculation || '');
+        setBrand(editingTrailer.brand || '');
+        setModel(editingTrailer.model || '');
+        setIsAvailable(editingTrailer.isAvailable !== false);
       } else {
         setImmatriculation('');
         setBrand('');
         setModel('');
-        setCurrentKm(0);
-        setAcquisitionDate('');
+        setIsAvailable(true);
       }
       setLoading(false);
     }
-  }, [isOpen, editingTruck]);
+  }, [isOpen, editingTrailer]);
 
   if (!isOpen) return null;
 
@@ -50,13 +44,13 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
         immatriculation,
         brand,
         model,
-        currentKm: Number(currentKm || 0),
-        acquisitionDate,
+        isAvailable,
       };
       if (!isEditMode) {
-        payload.isAvailable = true;
+        payload.acquisitionDate = new Date().toISOString();
+        payload.currentKm = 0;
       }
-      await onSubmit(payload, editingTruck?._id);
+      await onSubmit(payload, editingTrailer?._id);
       onClose();
     } catch (err) {
       // onSubmit handles toast
@@ -76,15 +70,15 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
           ×
         </button>
         <h2 className="text-xl font-semibold text-white mb-1">
-          {isEditMode ? 'Modifier le Camion' : 'Nouveau Camion'}
+          {isEditMode ? 'Modifier la Remorque' : 'Nouvelle Remorque'}
         </h2>
         <p className="text-sm text-slate-300 mb-4">
-          {isEditMode ? 'Modifier les informations du camion' : 'Ajoutez un véhicule à la flotte'}
+          {isEditMode ? 'Modifier les informations de la remorque' : 'Ajoutez une remorque à la flotte'}
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <label className="text-sm text-slate-200">Immatriculation</label>
+            <label className="text-sm text-slate-200">Immatriculation *</label>
             <input
               type="text"
               required
@@ -97,48 +91,39 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm text-slate-200">Marque</label>
+              <label className="text-sm text-slate-200">Marque *</label>
               <input
                 type="text"
+                required
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
                 className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
-                placeholder="Volvo"
+                placeholder="Ex: Schmitz"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-slate-200">Modèle</label>
+              <label className="text-sm text-slate-200">Modèle *</label>
               <input
                 type="text"
+                required
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
-                placeholder="FH16"
+                placeholder="Ex: Cargobull"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm text-slate-200">Kilométrage actuel</label>
-              <input
-                type="number"
-                min="0"
-                value={currentKm}
-                onChange={(e) => setCurrentKm(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
-                placeholder="120000"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm text-slate-200">Date d'acquisition</label>
-              <input
-                type="date"
-                value={acquisitionDate}
-                onChange={(e) => setAcquisitionDate(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm text-slate-200">Statut</label>
+            <select
+              value={isAvailable ? 'true' : 'false'}
+              onChange={(e) => setIsAvailable(e.target.value === 'true')}
+              className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-gradient-start"
+            >
+              <option value="true">Disponible</option>
+              <option value="false">En mission</option>
+            </select>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
@@ -164,8 +149,8 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
   );
 };
 
-const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
-  const rows = useMemo(() => trucks, [trucks]);
+const TrailersTable = ({ trailers = [], loading, onEdit, onDelete }) => {
+  const rows = useMemo(() => trailers, [trailers]);
 
   if (loading) {
     return (
@@ -183,7 +168,7 @@ const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-6 text-center text-slate-200 shadow-xl">
-        Aucun camion trouvé.
+        Aucune remorque trouvée.
       </div>
     );
   }
@@ -192,8 +177,8 @@ const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
     <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-4 shadow-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-slate-200">
-          <Truck className="h-4 w-4 text-cyan-400" />
-          <span className="text-sm">Liste des camions</span>
+          <Container className="h-4 w-4 text-cyan-400" />
+          <span className="text-sm">Liste des remorques</span>
         </div>
       </div>
       <div className="overflow-auto">
@@ -201,36 +186,32 @@ const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
           <thead className="bg-white/10 text-slate-200">
             <tr>
               <th className="px-4 py-3 font-semibold">Immatriculation</th>
-              <th className="px-4 py-3 font-semibold">Marque / Modèle</th>
-              <th className="px-4 py-3 font-semibold">Kilométrage</th>
+              <th className="px-4 py-3 font-semibold">Marque</th>
+              <th className="px-4 py-3 font-semibold">Modèle</th>
               <th className="px-4 py-3 font-semibold">Statut</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((truck) => (
-              <tr key={truck._id} className="hover:bg-white/5 transition-colors">
+            {rows.map((trailer) => (
+              <tr key={trailer._id} className="hover:bg-white/5 transition-colors">
                 <td className="px-4 py-3">
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/10">
-                    {truck.immatriculation}
+                    {trailer.immatriculation}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-200">
-                  {truck.brand} {truck.model}
-                </td>
-                <td className="px-4 py-3 text-slate-200">
-                  {formatKm(truck.currentKm)}
-                </td>
+                <td className="px-4 py-3 text-slate-200">{trailer.brand || '—'}</td>
+                <td className="px-4 py-3 text-slate-200">{trailer.model || '—'}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(truck.isAvailable)}`}>
-                    {truck.isAvailable ? 'Disponible' : 'En mission'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(trailer.isAvailable)}`}>
+                    {trailer.isAvailable ? 'Disponible' : 'En mission'}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onEdit(truck)}
+                      onClick={() => onEdit(trailer)}
                       className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
                       title="Modifier"
                     >
@@ -238,7 +219,7 @@ const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => onDelete(truck._id)}
+                      onClick={() => onDelete(trailer._id)}
                       className="p-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
                       title="Supprimer"
                     >
@@ -255,63 +236,63 @@ const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
   );
 };
 
-const AdminTrucks = () => {
-  const [trucks, setTrucks] = useState([]);
+const AdminTrailers = () => {
+  const [trailers, setTrailers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTruck, setEditingTruck] = useState(null);
+  const [editingTrailer, setEditingTrailer] = useState(null);
 
-  const loadTrucks = async () => {
+  const loadTrailers = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/trucks');
-      setTrucks(data?.trucks || data || []);
+      const { data } = await api.get('/trailers');
+      setTrailers(data?.trailers || data || []);
     } catch (err) {
-      const message = err.response?.data?.message || 'Impossible de charger les camions';
+      const message = err.response?.data?.message || 'Impossible de charger les remorques';
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmitTruck = async (payload, truckId) => {
+  const handleSubmitTrailer = async (payload, trailerId) => {
     try {
-      if (truckId) {
-        await api.put(`/trucks/${truckId}`, payload);
-        toast.success('Camion modifié avec succès');
+      if (trailerId) {
+        await api.put(`/trailers/${trailerId}`, payload);
+        toast.success('Remorque modifiée avec succès');
       } else {
-        await api.post('/trucks', payload);
-        toast.success('Camion créé avec succès');
+        await api.post('/trailers', payload);
+        toast.success('Remorque créée avec succès');
       }
-      await loadTrucks();
+      await loadTrailers();
     } catch (err) {
-      const message = err.response?.data?.message || `Erreur lors de la ${truckId ? 'modification' : 'création'} du camion`;
+      const message = err.response?.data?.message || `Erreur lors de la ${trailerId ? 'modification' : 'création'} de la remorque`;
       toast.error(message);
       throw err;
     }
   };
 
-  const handleEditTruck = (truck) => {
-    setEditingTruck(truck);
+  const handleEditTrailer = (trailer) => {
+    setEditingTrailer(trailer);
     setModalOpen(true);
   };
 
-  const handleDeleteTruck = async (truckId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce camion ?')) {
+  const handleDeleteTrailer = async (trailerId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette remorque ?')) {
       return;
     }
     try {
-      await api.delete(`/trucks/${truckId}`);
-      toast.success('Camion supprimé avec succès');
-      await loadTrucks();
+      await api.delete(`/trailers/${trailerId}`);
+      toast.success('Remorque supprimée avec succès');
+      await loadTrailers();
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur lors de la suppression du camion';
+      const message = err.response?.data?.message || 'Erreur lors de la suppression de la remorque';
       toast.error(message);
     }
   };
 
   useEffect(() => {
-    loadTrucks();
+    loadTrailers();
   }, []);
 
   return (
@@ -319,36 +300,36 @@ const AdminTrucks = () => {
       <Toaster position="top-right" />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gestion des Camions</h1>
-          <p className="text-sm text-slate-300">Ajoutez et suivez les véhicules.</p>
+          <h1 className="text-2xl font-bold text-white">Gestion des Remorques</h1>
+          <p className="text-sm text-slate-300">Ajoutez et suivez les remorques.</p>
         </div>
         <button
           type="button"
           onClick={() => {
-            setEditingTruck(null);
+            setEditingTrailer(null);
             setModalOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
-          Nouveau Camion
+          Nouvelle Remorque
         </button>
       </div>
 
-      <TrucksTable trucks={trucks} loading={loading} onEdit={handleEditTruck} onDelete={handleDeleteTruck} />
+      <TrailersTable trailers={trailers} loading={loading} onEdit={handleEditTrailer} onDelete={handleDeleteTrailer} />
 
-      <AddTruckModal
+      <AddTrailerModal
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false);
-          setEditingTruck(null);
+          setEditingTrailer(null);
         }}
-        onSubmit={handleSubmitTruck}
-        editingTruck={editingTruck}
+        onSubmit={handleSubmitTrailer}
+        editingTrailer={editingTrailer}
       />
     </div>
   );
 };
 
-export default AdminTrucks;
+export default AdminTrailers;
 
