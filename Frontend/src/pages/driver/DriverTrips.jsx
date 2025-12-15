@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Play, Truck, MapPin, Clock3, AlertCircle, CheckCircle } from 'lucide-react';
+import { Play, Truck, MapPin, Clock3, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 import ReportModal from '../../components/ui/ReportModal';
@@ -25,6 +25,7 @@ const DriverTrips = () => {
   const [error, setError] = useState(null);
   const [actionId, setActionId] = useState(null);
   const [reportTrip, setReportTrip] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const loadTrips = async () => {
     try {
@@ -58,6 +59,30 @@ const DriverTrips = () => {
       setError(message);
     } finally {
       setActionId(null);
+    }
+  };
+
+  const handleDownloadPdf = async (tripId) => {
+    const toastId = toast.loading('Téléchargement du PDF...');
+    try {
+      setDownloadingId(tripId);
+      const { data } = await api.get(`/trips/${tripId}/pdf`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ordre_mission_${tripId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF téléchargé', { id: toastId });
+    } catch (err) {
+      const message = err.response?.data?.message || 'Impossible de télécharger le PDF';
+      toast.error(message, { id: toastId });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -123,9 +148,19 @@ const DriverTrips = () => {
                     <Clock3 className="h-4 w-4 text-white" />
                     <span>{planned}</span>
                   </div>
-                  <span className={`text-xs font-semibold uppercase px-3 py-1 rounded-full ${statusClass}`}>
-                    {statusLabel[trip.status] || trip.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold uppercase px-3 py-1 rounded-full ${statusClass}`}>
+                      {statusLabel[trip.status] || trip.status}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPdf(trip._id)}
+                      disabled={downloadingId === trip._id}
+                      className="p-2 rounded-full text-cyan-300 hover:text-cyan-200 hover:bg-white/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <FileText className={`h-4 w-4 ${downloadingId === trip._id ? 'animate-pulse' : ''}`} />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
