@@ -49,11 +49,10 @@ tripReportSchema.virtual('consumption').get(function () {
     return (this.gasoilVolumeFilled / distance) * 100;
 });
 
-tripReportSchema.pre('validate', function (next) {
+tripReportSchema.pre('validate', async function () {
     if (this.endKmReading < this.startKmReading) {
         throw new Error('endKmReading must be greater than or equal to startKmReading');
     }
-    next();
 });
 
 module.exports = mongoose.model('TripReport', tripReportSchema);
