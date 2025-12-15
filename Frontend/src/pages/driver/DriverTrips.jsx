@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Play, Truck, MapPin, Clock3, AlertCircle } from 'lucide-react';
+import { Play, Truck, MapPin, Clock3, AlertCircle, CheckCircle } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
+import ReportModal from '../../components/ui/ReportModal';
 
 const statusStyles = {
   Planned: 'bg-yellow-500/20 text-yellow-300',
@@ -22,6 +24,7 @@ const DriverTrips = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionId, setActionId] = useState(null);
+  const [reportTrip, setReportTrip] = useState(null);
 
   const loadTrips = async () => {
     try {
@@ -58,6 +61,18 @@ const DriverTrips = () => {
     }
   };
 
+  const handleReportSubmit = async (formData) => {
+    try {
+      await api.post('/trip-reports', formData);
+      toast.success('Mission clôturée avec succès');
+      setReportTrip(null);
+      await loadTrips();
+    } catch (err) {
+      const message = err.response?.data?.message || 'Impossible de clôturer la mission';
+      toast.error(message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-4 text-slate-100">
@@ -68,6 +83,8 @@ const DriverTrips = () => {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-right" />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Mes Missions</h1>
@@ -147,8 +164,10 @@ const DriverTrips = () => {
                   {trip.status === 'InProgress' && (
                     <button
                       type="button"
+                      onClick={() => setReportTrip(trip)}
                       className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 border border-white/10"
                     >
+                      <CheckCircle className="h-4 w-4" />
                       Terminer / Rapport
                     </button>
                   )}
@@ -158,9 +177,17 @@ const DriverTrips = () => {
           })}
         </div>
       )}
+
+      <ReportModal
+        trip={reportTrip}
+        isOpen={!!reportTrip}
+        onClose={() => setReportTrip(null)}
+        onSubmit={handleReportSubmit}
+      />
     </div>
   );
 };
 
 export default DriverTrips;
+
 
