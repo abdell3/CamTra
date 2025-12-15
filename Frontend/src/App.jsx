@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
+import LoginPage from './pages/Login';
 
-const LoginPage = () => <div>Login Page</div>;
 const UnauthorizedPage = () => <div>Accès non autorisé</div>;
 const AdminDashboard = () => <div>Admin Dashboard</div>;
 const AdminDrivers = () => <div>Admin Drivers</div>;
