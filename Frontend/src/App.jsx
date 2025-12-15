@@ -4,15 +4,13 @@ import ProtectedRoute from './components/ui/ProtectedRoute';
 import LoginPage from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import DriverLayout from './layouts/DriverLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDrivers from './pages/admin/AdminDrivers';
+import AdminTrips from './pages/admin/AdminTrips';
+import AdminTrucks from './pages/admin/AdminTrucks';
+import DriverTrips from './pages/driver/DriverTrips';
 
 const UnauthorizedPage = () => <div>Accès non autorisé</div>;
-const AdminDashboard = () => <div>Admin Dashboard</div>;
-const AdminDrivers = () => <div>Admin Drivers</div>;
-const AdminTrucks = () => <div>Admin Trucks</div>;
-const AdminTrips = () => <div>Admin Trips</div>;
-import DriverTrips from './pages/driver/DriverTrips';
-// import AdminDashboard from './pages/admin/AdminDashboard';
-// import AdminDrivers from './pages/admin/AdminDrivers';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
