@@ -3,7 +3,12 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-slate-100 min-h-screen;
+  html, body {
+    @apply bg-slate-900 text-slate-100 min-h-screen;
+    background: linear-gradient(135deg, #0f172a 0%, #312e81 50%, #0f766e 100%) fixed;
+  }
+
+  #root {
+    min-height: 100vh;
   }
 }
