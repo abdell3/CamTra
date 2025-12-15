@@ -3,9 +3,9 @@ import { Play, Truck, MapPin, Clock3, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
 
 const statusStyles = {
-  Planned: 'border-l-4 border-yellow-400',
-  InProgress: 'border-l-4 border-blue-400',
-  Completed: 'border-l-4 border-green-500',
+  Planned: 'bg-yellow-500/20 text-yellow-300',
+  InProgress: 'bg-blue-500/20 text-blue-200',
+  Completed: 'bg-green-500/20 text-green-200',
 };
 
 const statusLabel = {
@@ -60,7 +60,7 @@ const DriverTrips = () => {
 
   if (loading) {
     return (
-      <div className="p-4 text-night">
+      <div className="p-4 text-slate-100">
         Chargement des missions...
       </div>
     );
@@ -70,20 +70,20 @@ const DriverTrips = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-night">Mes Missions</h1>
-          <p className="text-sm text-gray-600">Les missions qui vous sont assignées.</p>
+          <h1 className="text-2xl font-bold text-white">Mes Missions</h1>
+          <p className="text-sm text-slate-200">Les missions qui vous sont assignées.</p>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-md border border-danger/30 bg-red-50 px-3 py-2 text-danger text-sm">
-          <AlertCircle className="h-4 w-4" />
+        <div className="flex items-center gap-2 rounded-md border border-danger/30 bg-red-500/10 px-3 py-2 text-danger text-sm">
+          <AlertCircle className="h-4 w-4 text-danger" />
           {error}
         </div>
       )}
 
       {trips.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-600">
+        <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 backdrop-blur-lg p-6 text-center text-slate-200 shadow-xl">
           Aucune mission assignée.
         </div>
       ) : (
@@ -91,7 +91,7 @@ const DriverTrips = () => {
           {trips.map((trip) => {
             const planned = formatDate(trip.plannedStartDate);
             const plannedEnd = formatDate(trip.plannedEndDate);
-            const statusClass = statusStyles[trip.status] || 'border-l-4 border-gray-200';
+            const statusClass = statusStyles[trip.status] || 'bg-white/10 text-white';
             const truckInfo = trip.assignedTruckId
               ? `${trip.assignedTruckId.brand || ''} ${trip.assignedTruckId.immatriculation || ''}`.trim()
               : 'Camion non assigné';
@@ -99,34 +99,34 @@ const DriverTrips = () => {
             return (
               <div
                 key={trip._id}
-                className={`bg-white shadow-sm rounded-lg p-4 flex flex-col gap-3 ${statusClass}`}
+                className="bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl rounded-2xl p-5 flex flex-col gap-4"
               >
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex items-center justify-between text-sm text-slate-200">
                   <div className="flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-gray-400" />
+                    <Clock3 className="h-4 w-4 text-white" />
                     <span>{planned}</span>
                   </div>
-                  <span className="text-xs font-semibold uppercase text-gray-600">
+                  <span className={`text-xs font-semibold uppercase px-3 py-1 rounded-full ${statusClass}`}>
                     {statusLabel[trip.status] || trip.status}
                   </span>
                 </div>
 
                 <div>
-                  <div className="text-lg font-semibold text-night">
+                  <div className="text-lg font-semibold text-white">
                     {trip.departureSite} → {trip.arrivalSite}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-slate-200">
                     Fin prévue : {plannedEnd}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center justify-between text-sm text-slate-200">
                   <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-gray-400" />
+                    <Truck className="h-4 w-4 text-white" />
                     <span>{truckInfo}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <MapPin className="h-4 w-4" />
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <MapPin className="h-4 w-4 text-white" />
                     <span>ID: {trip._id.slice(-6)}</span>
                   </div>
                 </div>
@@ -137,7 +137,7 @@ const DriverTrips = () => {
                       type="button"
                       onClick={() => handleStart(trip._id)}
                       disabled={actionId === trip._id}
-                      className="inline-flex items-center gap-2 rounded-lg bg-brick px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brick-light disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Play className="h-4 w-4" />
                       {actionId === trip._id ? 'Démarrage...' : 'Démarrer'}
@@ -147,7 +147,7 @@ const DriverTrips = () => {
                   {trip.status === 'InProgress' && (
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-lg bg-night px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-night-light"
+                      className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 border border-white/10"
                     >
                       Terminer / Rapport
                     </button>
