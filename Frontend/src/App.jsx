@@ -5,10 +5,10 @@ import LoginPage from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import DriverLayout from './layouts/DriverLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDrivers from './pages/admin/AdminDrivers';
 import DriverTrips from './pages/driver/DriverTrips';
 
 const UnauthorizedPage = () => <div>Accès non autorisé</div>;
-const AdminDrivers = () => <div>Admin Drivers</div>;
 const AdminTrucks = () => <div>Admin Trucks</div>;
 const AdminTrips = () => <div>Admin Trips</div>;
 
