@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, AlertTriangle, Settings, Wrench, Truck, AlertCircle } from 'lucide-react';
+import { Plus, AlertTriangle, Settings, Wrench, Truck, AlertCircle, Pencil } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -80,7 +80,7 @@ const AlertsTab = ({ alerts, loading }) => {
   );
 };
 
-const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
+const CreateRuleModal = ({ isOpen, onClose, onSubmit, editingRule = null }) => {
   const [name, setName] = useState('');
   const [targetEntityType, setTargetEntityType] = useState('');
   const [severity, setSeverity] = useState('Medium');
@@ -89,16 +89,27 @@ const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isEditMode = !!editingRule;
+
   useEffect(() => {
     if (isOpen) {
-      setName('');
-      setTargetEntityType('');
-      setSeverity('Medium');
-      setPeriodKm('');
-      setPeriodMonths('');
-      setDescription('');
+      if (editingRule) {
+        setName(editingRule.name || '');
+        setTargetEntityType(editingRule.targetEntityType || '');
+        setSeverity(editingRule.severity || 'Medium');
+        setPeriodKm(editingRule.periodKm ? String(editingRule.periodKm) : '');
+        setPeriodMonths(editingRule.periodMonths ? String(editingRule.periodMonths) : '');
+        setDescription(editingRule.description || '');
+      } else {
+        setName('');
+        setTargetEntityType('');
+        setSeverity('Medium');
+        setPeriodKm('');
+        setPeriodMonths('');
+        setDescription('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editingRule]);
 
   if (!isOpen) return null;
 
@@ -134,7 +145,7 @@ const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
         payload.periodMonths = Number(periodMonths);
       }
 
-      await onSubmit(payload);
+      await onSubmit(payload, editingRule?._id);
       onClose();
     } catch (err) {
       // onSubmit gère le toast
@@ -153,8 +164,12 @@ const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold text-white mb-1">Nouvelle Règle de Maintenance</h2>
-        <p className="text-sm text-slate-300 mb-4">Définir une règle de maintenance périodique</p>
+        <h2 className="text-xl font-semibold text-white mb-1">
+          {isEditMode ? 'Modifier la Règle de Maintenance' : 'Nouvelle Règle de Maintenance'}
+        </h2>
+        <p className="text-sm text-slate-300 mb-4">
+          {isEditMode ? 'Modifier les informations de la règle' : 'Définir une règle de maintenance périodique'}
+        </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
@@ -271,7 +286,7 @@ const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Création...' : 'Créer la règle'}
+              {loading ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier la règle' : 'Créer la règle')}
             </button>
           </div>
         </form>
@@ -280,7 +295,7 @@ const CreateRuleModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-const RulesTab = ({ rules, loading, onCreateRule, onDeleteRule }) => {
+const RulesTab = ({ rules, loading, onCreateRule, onEditRule, onDeleteRule }) => {
   if (loading) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-4 shadow-xl">
@@ -351,13 +366,23 @@ const RulesTab = ({ rules, loading, onCreateRule, onDeleteRule }) => {
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onDeleteRule(rule._id)}
-                  className="ml-4 px-3 py-1 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/20 rounded-lg transition-colors"
-                >
-                  Supprimer
-                </button>
+                <div className="ml-4 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEditRule(rule)}
+                    className="px-3 py-1 text-sm text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Modifier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteRule(rule._id)}
+                    className="px-3 py-1 text-sm text-red-300 hover:text-red-200 hover:bg-red-500/20 rounded-lg transition-colors"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -374,6 +399,7 @@ const AdminMaintenance = () => {
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [rulesLoading, setRulesLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
 
   const loadAlerts = async () => {
     try {
@@ -401,16 +427,26 @@ const AdminMaintenance = () => {
     }
   };
 
-  const handleCreateRule = async (payload) => {
+  const handleSubmitRule = async (payload, ruleId) => {
     try {
-      await api.post('/maintenance-rules', payload);
-      toast.success('Règle de maintenance créée avec succès');
+      if (ruleId) {
+        await api.put(`/maintenance-rules/${ruleId}`, payload);
+        toast.success('Règle de maintenance modifiée avec succès');
+      } else {
+        await api.post('/maintenance-rules', payload);
+        toast.success('Règle de maintenance créée avec succès');
+      }
       await loadRules();
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur lors de la création de la règle';
+      const message = err.response?.data?.message || `Erreur lors de la ${ruleId ? 'modification' : 'création'} de la règle`;
       toast.error(message);
       throw err;
     }
+  };
+
+  const handleEditRule = (rule) => {
+    setEditingRule(rule);
+    setModalOpen(true);
   };
 
   const handleDeleteRule = async (id) => {
@@ -446,7 +482,10 @@ const AdminMaintenance = () => {
         {activeTab === 'rules' && (
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setEditingRule(null);
+              setModalOpen(true);
+            }}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
@@ -493,15 +532,20 @@ const AdminMaintenance = () => {
         <RulesTab
           rules={rules}
           loading={rulesLoading}
-          onCreateRule={handleCreateRule}
+          onCreateRule={handleSubmitRule}
+          onEditRule={handleEditRule}
           onDeleteRule={handleDeleteRule}
         />
       )}
 
       <CreateRuleModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleCreateRule}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingRule(null);
+        }}
+        onSubmit={handleSubmitRule}
+        editingRule={editingRule}
       />
     </div>
   );

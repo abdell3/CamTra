@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Package, Truck, AlertCircle } from 'lucide-react';
+import { Plus, Package, Truck, AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -11,7 +11,7 @@ const statusBadge = {
   Reforme: 'bg-slate-500/20 text-slate-200 border border-slate-400/30',
 };
 
-const AddTireModal = ({ isOpen, onClose, onSubmit }) => {
+const AddTireModal = ({ isOpen, onClose, onSubmit, editingTire = null }) => {
   const [serialNumber, setSerialNumber] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
@@ -19,15 +19,25 @@ const AddTireModal = ({ isOpen, onClose, onSubmit }) => {
   const [purchaseDate, setPurchaseDate] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isEditMode = !!editingTire;
+
   useEffect(() => {
     if (isOpen) {
-      setSerialNumber('');
-      setBrand('');
-      setModel('');
-      setStatus('Neuf');
-      setPurchaseDate('');
+      if (editingTire) {
+        setSerialNumber(editingTire.serialNumber || '');
+        setBrand(editingTire.brand || '');
+        setModel(editingTire.model || '');
+        setStatus(editingTire.status || 'Neuf');
+        setPurchaseDate(editingTire.purchaseDate ? new Date(editingTire.purchaseDate).toISOString().split('T')[0] : '');
+      } else {
+        setSerialNumber('');
+        setBrand('');
+        setModel('');
+        setStatus('Neuf');
+        setPurchaseDate('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editingTire]);
 
   if (!isOpen) return null;
 
@@ -44,7 +54,7 @@ const AddTireModal = ({ isOpen, onClose, onSubmit }) => {
         status,
         purchaseDate: purchaseDate || new Date().toISOString().split('T')[0],
       };
-      await onSubmit(payload);
+      await onSubmit(payload, editingTire?._id);
       onClose();
     } catch (err) {
       // onSubmit gère le toast
@@ -63,8 +73,12 @@ const AddTireModal = ({ isOpen, onClose, onSubmit }) => {
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold text-white mb-1">Nouveau Pneu</h2>
-        <p className="text-sm text-slate-300 mb-4">Ajouter un pneu au stock</p>
+        <h2 className="text-xl font-semibold text-white mb-1">
+          {isEditMode ? 'Modifier le Pneu' : 'Nouveau Pneu'}
+        </h2>
+        <p className="text-sm text-slate-300 mb-4">
+          {isEditMode ? 'Modifier les informations du pneu' : 'Ajouter un pneu au stock'}
+        </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
@@ -146,7 +160,7 @@ const AddTireModal = ({ isOpen, onClose, onSubmit }) => {
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Création...' : 'Ajouter le pneu'}
+              {loading ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier' : 'Ajouter le pneu')}
             </button>
           </div>
         </form>
@@ -159,6 +173,7 @@ const AdminTires = () => {
   const [tires, setTires] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTire, setEditingTire] = useState(null);
 
   const loadTires = async () => {
     try {
@@ -173,20 +188,39 @@ const AdminTires = () => {
     }
   };
 
-  const handleCreateTire = async (payload) => {
+  const handleSubmitTire = async (payload, tireId) => {
     try {
-      await api.post('/tires', payload);
-      toast.success('Pneu ajouté avec succès');
+      if (tireId) {
+        await api.put(`/tires/${tireId}`, payload);
+        toast.success('Pneu modifié avec succès');
+      } else {
+        await api.post('/tires', payload);
+        toast.success('Pneu ajouté avec succès');
+      }
       await loadTires();
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur lors de l\'ajout du pneu';
-      if (err.response?.status === 400 || err.response?.status === 409) {
-        // Erreur de validation ou duplicata
-        toast.error(message);
-      } else {
-        toast.error(message);
-      }
+      const message = err.response?.data?.message || `Erreur lors de l'${tireId ? 'modification' : 'ajout'} du pneu`;
+      toast.error(message);
       throw err;
+    }
+  };
+
+  const handleEditTire = (tire) => {
+    setEditingTire(tire);
+    setModalOpen(true);
+  };
+
+  const handleDeleteTire = async (tireId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce pneu ?')) {
+      return;
+    }
+    try {
+      await api.delete(`/tires/${tireId}`);
+      toast.success('Pneu supprimé avec succès');
+      await loadTires();
+    } catch (err) {
+      const message = err.response?.data?.message || 'Erreur lors de la suppression du pneu';
+      toast.error(message);
     }
   };
 
@@ -201,15 +235,9 @@ const AdminTires = () => {
     return tire.mountedOnModel === 'Truck' ? 'Camion' : 'Remorque';
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Gestion des Pneus</h1>
-            <p className="text-sm text-slate-300">Stock et suivi des pneus</p>
-          </div>
-        </div>
+  const TiresTable = ({ tires = [], loading, onEdit, onDelete }) => {
+    if (loading) {
+      return (
         <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-4 shadow-xl">
           <div className="h-10 w-32 bg-white/10 rounded animate-pulse mb-3" />
           <div className="space-y-2">
@@ -218,9 +246,98 @@ const AdminTires = () => {
             ))}
           </div>
         </div>
+      );
+    }
+
+    if (!tires || tires.length === 0) {
+      return (
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-6 text-center text-slate-200 shadow-xl">
+          <Package className="h-12 w-12 mx-auto mb-3 text-slate-400" />
+          <p>Aucun pneu enregistré.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-4 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-slate-200">
+            <Package className="h-4 w-4 text-cyan-400" />
+            <span className="text-sm">Liste des pneus</span>
+          </div>
+        </div>
+        <div className="overflow-auto">
+          <table className="min-w-full text-left text-sm text-slate-100">
+            <thead className="bg-white/10 text-slate-200">
+              <tr>
+                <th className="px-4 py-3 font-semibold">N° Série</th>
+                <th className="px-4 py-3 font-semibold">Marque / Modèle</th>
+                <th className="px-4 py-3 font-semibold">Statut</th>
+                <th className="px-4 py-3 font-semibold">Monté sur</th>
+                <th className="px-4 py-3 font-semibold">Km parcourus</th>
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tires.map((tire) => (
+                <tr key={tire._id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3 text-slate-200 font-mono text-xs">
+                    {tire.serialNumber || '—'}
+                  </td>
+                  <td className="px-4 py-3 text-white">
+                    <div className="font-semibold">{tire.brand || '—'}</div>
+                    <div className="text-xs text-slate-300">{tire.model || '—'}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        statusBadge[tire.status] || 'bg-white/10 text-white border border-white/10'
+                      }`}
+                    >
+                      {tire.status || '—'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-200">
+                    <div className="flex items-center gap-2">
+                      {tire.mountedOnEntity ? (
+                        <Truck className="h-4 w-4 text-cyan-400" />
+                      ) : (
+                        <Package className="h-4 w-4 text-slate-400" />
+                      )}
+                      <span>{getMountedOnText(tire)}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-200">
+                    {tire.totalKmDriven ? tire.totalKmDriven.toLocaleString('fr-FR') : '0'} km
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(tire)}
+                        className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                        title="Modifier"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(tire._id)}
+                        className="p-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -232,7 +349,10 @@ const AdminTires = () => {
         </div>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setEditingTire(null);
+            setModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
@@ -240,74 +360,16 @@ const AdminTires = () => {
         </button>
       </div>
 
-      {!tires || tires.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-6 text-center text-slate-200 shadow-xl">
-          <Package className="h-12 w-12 mx-auto mb-3 text-slate-400" />
-          <p>Aucun pneu enregistré.</p>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-4 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-slate-200">
-              <Package className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm">Liste des pneus</span>
-            </div>
-          </div>
-          <div className="overflow-auto">
-            <table className="min-w-full text-left text-sm text-slate-100">
-              <thead className="bg-white/10 text-slate-200">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">N° Série</th>
-                  <th className="px-4 py-3 font-semibold">Marque / Modèle</th>
-                  <th className="px-4 py-3 font-semibold">Statut</th>
-                  <th className="px-4 py-3 font-semibold">Monté sur</th>
-                  <th className="px-4 py-3 font-semibold">Km parcourus</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tires.map((tire) => (
-                  <tr key={tire._id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 text-slate-200 font-mono text-xs">
-                      {tire.serialNumber || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-white">
-                      <div className="font-semibold">{tire.brand || '—'}</div>
-                      <div className="text-xs text-slate-300">{tire.model || '—'}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          statusBadge[tire.status] || 'bg-white/10 text-white border border-white/10'
-                        }`}
-                      >
-                        {tire.status || '—'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-200">
-                      <div className="flex items-center gap-2">
-                        {tire.mountedOnEntity ? (
-                          <Truck className="h-4 w-4 text-cyan-400" />
-                        ) : (
-                          <Package className="h-4 w-4 text-slate-400" />
-                        )}
-                        <span>{getMountedOnText(tire)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-200">
-                      {tire.totalKmDriven ? tire.totalKmDriven.toLocaleString('fr-FR') : '0'} km
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <TiresTable tires={tires} loading={loading} onEdit={handleEditTire} onDelete={handleDeleteTire} />
 
       <AddTireModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleCreateTire}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingTire(null);
+        }}
+        onSubmit={handleSubmitTire}
+        editingTire={editingTire}
       />
     </div>
   );

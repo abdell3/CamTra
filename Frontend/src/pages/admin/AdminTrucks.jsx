@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Truck } from 'lucide-react';
+import { Plus, Truck, Pencil, Trash2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -11,7 +11,7 @@ const statusBadge = (isAvailable) =>
     ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30'
     : 'bg-red-500/20 text-red-200 border border-red-400/30';
 
-const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
+const AddTruckModal = ({ isOpen, onClose, onSubmit, editingTruck = null }) => {
   const [immatriculation, setImmatriculation] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
@@ -19,16 +19,26 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
   const [acquisitionDate, setAcquisitionDate] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isEditMode = !!editingTruck;
+
   useEffect(() => {
     if (isOpen) {
-      setImmatriculation('');
-      setBrand('');
-      setModel('');
-      setCurrentKm(0);
-      setAcquisitionDate('');
+      if (editingTruck) {
+        setImmatriculation(editingTruck.immatriculation || '');
+        setBrand(editingTruck.brand || '');
+        setModel(editingTruck.model || '');
+        setCurrentKm(editingTruck.currentKm || 0);
+        setAcquisitionDate(editingTruck.acquisitionDate ? new Date(editingTruck.acquisitionDate).toISOString().split('T')[0] : '');
+      } else {
+        setImmatriculation('');
+        setBrand('');
+        setModel('');
+        setCurrentKm(0);
+        setAcquisitionDate('');
+      }
       setLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, editingTruck]);
 
   if (!isOpen) return null;
 
@@ -36,14 +46,17 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await onSubmit({
+      const payload = {
         immatriculation,
         brand,
         model,
         currentKm: Number(currentKm || 0),
         acquisitionDate,
-        isAvailable: true,
-      });
+      };
+      if (!isEditMode) {
+        payload.isAvailable = true;
+      }
+      await onSubmit(payload, editingTruck?._id);
       onClose();
     } catch (err) {
       // onSubmit handles toast
@@ -62,8 +75,12 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold text-white mb-1">Nouveau Camion</h2>
-        <p className="text-sm text-slate-300 mb-4">Ajoutez un véhicule à la flotte</p>
+        <h2 className="text-xl font-semibold text-white mb-1">
+          {isEditMode ? 'Modifier le Camion' : 'Nouveau Camion'}
+        </h2>
+        <p className="text-sm text-slate-300 mb-4">
+          {isEditMode ? 'Modifier les informations du camion' : 'Ajoutez un véhicule à la flotte'}
+        </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
@@ -138,7 +155,7 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
-              {loading ? 'Création...' : 'Créer'}
+              {loading ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier' : 'Créer')}
             </button>
           </div>
         </form>
@@ -147,7 +164,7 @@ const AddTruckModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-const TrucksTable = ({ trucks = [], loading }) => {
+const TrucksTable = ({ trucks = [], loading, onEdit, onDelete }) => {
   const rows = useMemo(() => trucks, [trucks]);
 
   if (loading) {
@@ -187,6 +204,7 @@ const TrucksTable = ({ trucks = [], loading }) => {
               <th className="px-4 py-3 font-semibold">Marque / Modèle</th>
               <th className="px-4 py-3 font-semibold">Kilométrage</th>
               <th className="px-4 py-3 font-semibold">Statut</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -208,6 +226,26 @@ const TrucksTable = ({ trucks = [], loading }) => {
                     {truck.isAvailable ? 'Disponible' : 'En mission'}
                   </span>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(truck)}
+                      className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                      title="Modifier"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(truck._id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -221,6 +259,7 @@ const AdminTrucks = () => {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTruck, setEditingTruck] = useState(null);
 
   const loadTrucks = async () => {
     try {
@@ -235,15 +274,39 @@ const AdminTrucks = () => {
     }
   };
 
-  const handleAddTruck = async (payload) => {
+  const handleSubmitTruck = async (payload, truckId) => {
     try {
-      await api.post('/trucks', payload);
-      toast.success('Camion créé avec succès');
+      if (truckId) {
+        await api.put(`/trucks/${truckId}`, payload);
+        toast.success('Camion modifié avec succès');
+      } else {
+        await api.post('/trucks', payload);
+        toast.success('Camion créé avec succès');
+      }
       await loadTrucks();
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur lors de la création du camion';
+      const message = err.response?.data?.message || `Erreur lors de la ${truckId ? 'modification' : 'création'} du camion`;
       toast.error(message);
       throw err;
+    }
+  };
+
+  const handleEditTruck = (truck) => {
+    setEditingTruck(truck);
+    setModalOpen(true);
+  };
+
+  const handleDeleteTruck = async (truckId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce camion ?')) {
+      return;
+    }
+    try {
+      await api.delete(`/trucks/${truckId}`);
+      toast.success('Camion supprimé avec succès');
+      await loadTrucks();
+    } catch (err) {
+      const message = err.response?.data?.message || 'Erreur lors de la suppression du camion';
+      toast.error(message);
     }
   };
 
@@ -261,7 +324,10 @@ const AdminTrucks = () => {
         </div>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setEditingTruck(null);
+            setModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end shadow-lg hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
@@ -269,12 +335,16 @@ const AdminTrucks = () => {
         </button>
       </div>
 
-      <TrucksTable trucks={trucks} loading={loading} />
+      <TrucksTable trucks={trucks} loading={loading} onEdit={handleEditTruck} onDelete={handleDeleteTruck} />
 
       <AddTruckModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleAddTruck}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingTruck(null);
+        }}
+        onSubmit={handleSubmitTruck}
+        editingTruck={editingTruck}
       />
     </div>
   );
