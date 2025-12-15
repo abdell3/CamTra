@@ -1,12 +1,15 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Truck, LayoutDashboard, Users, Map, LogOut } from 'lucide-react';
+import { Truck, LayoutDashboard, Users, Map, Wrench, Container, Circle, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Chauffeurs', to: '/admin/drivers', icon: Users },
   { label: 'Camions', to: '/admin/trucks', icon: Truck },
+  { label: 'Remorques', to: '/admin/trailers', icon: Container },
+  { label: 'Pneus', to: '/admin/tires', icon: Circle },
   { label: 'Trajets', to: '/admin/trips', icon: Map },
+  { label: 'Maintenance', to: '/admin/maintenance', icon: Wrench },
 ];
 
 const AdminLayout = () => {

@@ -8,6 +8,9 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminDrivers from './pages/admin/AdminDrivers';
 import AdminTrips from './pages/admin/AdminTrips';
 import AdminTrucks from './pages/admin/AdminTrucks';
+import AdminTrailers from './pages/admin/AdminTrailers';
+import AdminTires from './pages/admin/AdminTires';
+import AdminMaintenance from './pages/admin/AdminMaintenance';
 import DriverTrips from './pages/driver/DriverTrips';
 
 const UnauthorizedPage = () => <div>Accès non autorisé</div>;
@@ -43,7 +46,10 @@ const AppRoutes = () => {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/drivers" element={<AdminDrivers />} />
         <Route path="/admin/trucks" element={<AdminTrucks />} />
+        <Route path="/admin/trailers" element={<AdminTrailers />} />
+        <Route path="/admin/tires" element={<AdminTires />} />
         <Route path="/admin/trips" element={<AdminTrips />} />
+        <Route path="/admin/maintenance" element={<AdminMaintenance />} />
       </Route>
 
       <Route
